@@ -1,0 +1,38 @@
+<div class="hidden">
+<table class="table-striped">
+<tr ng-repeat="main in rawResult.vin_inve | nodouble idVIN_ITEM" >
+<td>
+<div>
+<table>
+<tr>
+<td></td>
+</tr>
+</table>
+</div>
+<div>
+<table>
+<tr ng-repeat="inve in rawResult.vin_inve | nodouble idVIN_INVE" ng-if="main.id == inve.id">
+<td></td>
+</tr>
+</table>
+</div>
+<div>
+<table>
+<tr ng-repeat="Lots in rawResult.vin_specs | nodouble idVIN_LSHE" ng-if="main.id == lots.id">
+<td></td>
+</tr>
+</table>
+</div>
+<div>
+<table>
+<tr ng-repeat="Spec in rawResult.vin_specs | nodouble idVIN_SSMA" ng-if="main.id == specs.id">
+<td></td>
+</tr>
+</table>
+</div>
+
+</td>
+</tr>
+</table>
+
+</div>

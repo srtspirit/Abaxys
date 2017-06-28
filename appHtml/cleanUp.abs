@@ -1,0 +1,53 @@
+System
+
+#1 - Data clean-up 
+#2 - Set auto logoff on timeout
+#3 - Test, Dev , Live Schema per customer
+
+
+
+
+Application
+
+Customer Item: VIN_CUST_ITEMS
+Note: New feature inserts automaticly into vin_cust from sales orders. Stores last price and date.
+
+- Sort default customer
+- invert (use client & Quote#)
+- If (VIN_CUST_ACTYP = CUST do not display Supplier 
+- Remove from list VIN_CUST_STDCP & COSTP (std cost & cost price) 
+- Replace with VIN_CUST_SELLP (Selling Price)
+
+- VIN_CUSTCT = Fix diplay of VIN_CUST_ACTYP
+- VIN_CUSTCT = Fic last price display
+
+
+Sales Order
+
+- Implement Customer Quote Price ****
+- if VIN_CUST_QUONU.trim() != '' & not Expired & selling > 0
+- Set quote display $amt + Exp. date OR $amt no expiry OR $amt has expired
+
+- Need a alert to CSR for re-issues
+- Need function to allow CSR to set re-issue to no.
+
+
+- Sales document retract required logic change.
+- Retract based on current document selection
+- All documents associated with current will be retracted also.
+
+
+
+Purchase Order to follow logical evolution with sales
+
+
+
+Ackno 3
+
+1 
+2
+3
+4
+
+
+

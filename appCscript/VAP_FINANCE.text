@@ -1,0 +1,48 @@
+Main def:
+Main.VAP_OIHE_BSUPP = '529'
+Main.VAP_OIHE_BTADD = '1488'
+Main.VAP_OIHE_OITTY = 'INV'
+Main.VAP_OIHE_CURID = '1'
+Main.VAP_OIHE_CURAT = '1.000'
+Main.VAP_OIHE_DOCDA = '20161127'
+Main.VAP_OIHE_AMUNT = '61.29'
+Main.VAP_OIHE_USLNA = 'niala'
+Main.VAP_BOOKING = 'false'
+
+RS0 def:
+RS0.idVAP_OIHE = '106'
+RS0.NEWPOST = '1'
+RS0.VAP_OIHE_DOCDA = 'null'
+RS0.VAP_OIHE_TRNID = 'null'
+RS0.VAP_OIHE_AMUNT = 'null'
+RS0.VREC = '[object Object],[object Object]'
+
+VR0 def:
+VR0.newItem = '1'
+VR0.idVIN_ITEM = '34'
+VR0.VIN_ITEM_INVIT = '0'
+VR0.VPU_ORST_ORDQT = '1'
+VR0.VPU_ORDE_OUNET = '21'
+VR0.ext = '21.00'
+VR0.ext.ab-orgval = 'null'
+
+VR1 def:
+VR1.newItem = '1'
+VR1.idVIN_ITEM = '26'
+VR1.VIN_ITEM_INVIT = '0'
+VR1.VPU_ORST_ORDQT = '2'
+VR1.VPU_ORDE_OUNET = '17.52'
+VR1.ext = '35.04'
+VR1.ext.ab-orgval = 'null'
+
+
+
+
+
+
+var occ = 0;
+while (occ < dDta.dbUpd.dta.rSet[0].VREC.length)
+{
+debug += showProps(dDta.dbUpd.dta.rSet[0].VREC[occ],"SR"+occ)
+occ += 1
+}

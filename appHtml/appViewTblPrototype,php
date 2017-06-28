@@ -1,0 +1,9 @@
+<?php
+echo "Hello";
+require_once "../stdHtml/stdViewTblPrototype.php";
+
+
+<script>
+alert("HEllO")
+</script>
+?>

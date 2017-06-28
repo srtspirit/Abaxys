@@ -1,0 +1,109 @@
+
+class dbMaster
+{
+	public $tblInfo;
+	public $tblPrimary;
+	public $tblUnique;
+	public $tblCtrts;
+	public $tblFlds;
+	public $tblKeys;
+	public $tblProcedures;
+	public $tblRules;
+	public $pdo;
+	public $stdTable;
+	
+	
+	
+	function dbMaster($tblName,$schema)
+	{
+		$this->mess = "";
+		$this->stdTable = false;
+		$this->tblInfo = new dbTblInfo($tblName,$schema);
+		$this->tblPrimary = new dbTblPrimary($tblName,$schema);
+		$this->tblUnique = new dbTblUnique($tblName,$schema);
+		$this->tblCtrts = new dbTblConstraints($tblName,$schema);
+		$this->tblFlds = new dbTblFields($tblName,$schema);
+	
+	}
+	
+	
+	
+	
+
+	function dbInitNewRec($objdta)
+	function onNewRec($tbl,$pr)
+
+	function dbInsRec($dtaObj)
+	function dbDelRec($dtaObj)
+	function dbUpdRec($dtaObj)
+	function dbRawUpd($ePost)
+
+	function dbChkMatch($objdta)
+	
+	function dbFindLike($objdta)
+	function dbFindFrom($objdta)
+	function dbFindMatch($objdta)
+
+	function dbSetTrig()
+
+	function dbPdoPrep($trig,$dta,$dtaType)
+	function dbPdoRecSet($trig,$dta,$dtaType)
+	
+	function dbValidConstraints($dtaObj)
+
+
+class dbTblInfo
+	function dbTblInfo($tname,$schema)
+class dbTblPrimary                                                       
+	function dbTblPrimary($tname,$schema)    
+	
+class dbTblUnique                                                        
+	function dbTblUnique($tname,$schema)     
+
+class dbTblConstraints                                                   
+	function dbTblConstraints($tname,$schema)
+
+class dbTblFields                                                        
+	function dbTblFields($tname,$schema)     
+
+class valQuery                                                           
+	function valQuery($schema,$trig)         
+
+
+
+
+
+function dspTblInfo($tblQ)
+function tbsAccessCond($trig,$condOn,$cond)
+function setEpost($schema,$post)
+function seturlDecode($obj)
+function openConnection($schema)
+function closeConnection($con)
+
+
+
+
+
+
+$_POST vars
+$_POST['SCHEMA']; Level 
+$_POST['TBLNAME']
+$_POST['PROCESS'] 
+$_POST['SESSION'] 
+$_POST['METHOD'] = "REQINFO"
+$_POST['METHOD'] = "REQSING"
+$_POST['METHOD'] = "REQFULL"
+$_POST['METHOD'] = "BORROW"
+$_POST['METHOD'] = "CREATE"
+$_POST['METHOD'] = "UPDATE"
+$_POST['METHOD'] = "DELETE"
+$_POST['RAWMATCH'] 
+$_POST['MATCH'] == "1"
+$_POST['GETMATCH']
+$_POST['RECSET']
+$_POST['REQUIRED']
+$_POST['SORTED']
+$_POST['MAXREC_OUT']
+
+
+

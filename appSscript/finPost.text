@@ -1,0 +1,113 @@
+VAR PAYMENTS
+$paccAccounts["SALES_RECEV"] = $E_POST["VAR_OIHE_AMUNT"];
+$paccAccounts["BANK"] = $bankTbl->result[0];
+$paccAccounts["BANK"]["GLAMT"] = $E_POST["VAR_OIHE_AMUNT"];
+
+VSL_SALES
+$paccAccounts["SALES_RECEV"] = $dtaSet["TOTSALES"]; // A
+$paccAccounts["SALES_RECEV"] += $dtaSet["EXPCHARGED"]; // B
+$paccAccounts["SALES_RECEV"] += $dtaSet["TAXES"][$occ]["GLAMT"]; // D
+$paccAccounts["SALES_REVENU"] = $dtaSet["TOTSALES"]; // A
+$paccAccounts["TAXES"][$occ] = $dtaSet["TAXES"][$occ]; // D
+$paccAccounts["EXPENSE_REIM"] = $dtaSet["EXPCHARGED"]; // B
+$paccAccounts["PROV_EXPENSE"] = $dtaSet["EXPBORNED"]; // C
+$paccAccounts["ACCR_EXPENSE"] = $dtaSet["EXPBORNED"]; // C
+
+$paccAccounts["COST_SALES"] = $dtaSet["AVGCOST"]; // E
+$paccAccounts["INVENTORY"] = $dtaSet["AVGCOST"]; // E
+		
+		
+VAP PAYMENTS
+$paccAccounts["PURCH_PAYABLE"] = $E_POST["VAP_OIHE_AMUNT"];
+$paccAccounts["BANK"] = $bankTbl->result[0];
+$paccAccounts["BANK"]["GLAMT"] = $E_POST["VAP_OIHE_AMUNT"];
+
+VPU_SALES
+$paccAccounts["PURCH_PAYABLE"] = $dtaSet["TOTSALES"]; // A
+$paccAccounts["PURCH_PAYABLE"] += $dtaSet["EXPCHARGED"]; // B
+$paccAccounts["PURCH_PAYABLE"] += $dtaSet["TAXES"][$occ]["GLAMT"]; // D
+$paccAccounts["PURCH_EXPENSE"] = $dtaSet["TOTSALES"]; // A
+$paccAccounts["TAXES"][$occ] = $dtaSet["TAXES"][$occ]; // D
+$paccAccounts["EXPENSE_REIM"] = $dtaSet["EXPCHARGED"]; // B
+$paccAccounts["PROV_EXPENSE"] = $dtaSet["EXPBORNED"]; // C
+$paccAccounts["ACCR_EXPENSE"] = $dtaSet["EXPBORNED"]; // C
+
+$paccAccounts["COST_SALES"] = $dtaSet["AVGCOST"]; // E
+$paccAccounts["INVENTORY"] = $dtaSet["AVGCOST"]; // E
+		
+
+
+		
+SELECT
+var_oihe.idVAR_OIHE,
+var_oihe.VAR_OIHE_BCUST,
+var_oihe.VAR_OIHE_INVOI,
+var_oihe.VAR_OIHE_TRNID,
+var_oihe.VAR_OIHE_OITTY,
+var_oihe.VAR_OIHE_DOCDA,
+var_oihe.VAR_OIHE_AMUNT,
+var_oihe.VAR_OIHE_CUSPO,
+var_oihe.VAR_OIHE_REFER,
+vsl_orsi.idVSL_ORSI,
+vsl_orsi.VSL_ORSI_CDATE,
+vsl_orst.VSL_ORST_ORDQT,
+vsl_orde.VSL_ORDE_ORLIN,
+vsl_orde.VSL_ORDE_OLTYP,
+vsl_orde.VSL_ORDE_OUNET
+
+FROM dev_erp.var_oihe
+
+LEFT JOIN dev_erp.vsl_orsi ON VAR_OIHE_INVOI = VSL_ORSI_GRPID
+LEFT JOIN dev_erp.vsl_orst ON VSL_ORST_WINVO = idVSL_ORSI
+LEFT JOIN dev_erp.vsl_orde ON VSL_ORST_ORLIN = idVSL_ORDE
+
+WHERE idVSL_ORSI > 0
+;
+		
+SELECT
+vgl_jnhe.VGL_JNHE_TRNID,
+vgl_jnhe.VGL_JNHE_DOCDA,
+vgl_jnhe.VGL_JNHE_PSOUR,
+var_oihe.idVAR_OIHE,
+var_oihe.VAR_OIHE_BCUST,
+var_oihe.VAR_OIHE_INVOI,
+var_oihe.VAR_OIHE_TRNID,
+var_oihe.VAR_OIHE_OITTY,
+var_oihe.VAR_OIHE_DOCDA,
+var_oihe.VAR_OIHE_AMUNT,
+var_oihe.VAR_OIHE_CUSPO,
+var_oihe.VAR_OIHE_REFER,
+vsl_orsi.idVSL_ORSI,
+vsl_orsi.VSL_ORSI_CDATE,
+vsl_orst.VSL_ORST_ORDQT,
+vsl_orde.VSL_ORDE_ORLIN,
+vsl_orde.VSL_ORDE_OLTYP,
+vsl_orde.VSL_ORDE_OUNET
+
+FROM dev_erp.vgl_jnhe
+
+LEFT JOIN dev_erp.var_oihe ON VAR_OIHE_TRNID = idVGL_JNHE
+LEFT JOIN dev_erp.vsl_orsi ON VAR_OIHE_INVOI = VSL_ORSI_GRPID
+LEFT JOIN dev_erp.vsl_orst ON VSL_ORST_WINVO = idVSL_ORSI
+LEFT JOIN dev_erp.vsl_orde ON VSL_ORST_ORLIN = idVSL_ORDE
+
+WHERE idVSL_ORSI > 0
+;
+
+
+CREATE
+DEFINER=`root`@`localhost`
+TRIGGER `dev_erp`.`testchanges_updaterr`
+BEFORE UPDATE ON `dev_erp`.`testchanges`
+FOR EACH ROW
+BEGIN
+ DECLARE msg VARCHAR(255);
+IF NEW.MOD_COUNT != OLD.MOD_COUNT THEN
+    SET msg = 'No can doC';
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = msg;
+ELSE
+    SET NEW.MOD_COUNT = NEW.MOD_COUNT + 1;
+END IF;
+END$$
+
+Will need to instruct session to store check field		

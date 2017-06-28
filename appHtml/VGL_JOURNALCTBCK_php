@@ -1,0 +1,631 @@
+<?php // require_once "../stdSscript/stdPHPobjGen.php"; ?>
+<?php require_once "../stdSscript/stdAppobjGen.php"; ?>
+<div class="hidden">
+	<?php require_once "../appCscript/VGL_FINANCE.php"; ?>
+</div>
+
+<div style="margin-left:5px;" ng-init="SESSION_DESCR='Financial journal posting'">
+
+	<div class="ab-spaceless"  >
+
+		<?php require_once "../stdCscript/stdFormButtons.php"; ?>
+		
+	</div>
+	
+<div class="hidden">
+<textarea class="hidden" ab-updSuccess="" >
+
+$scope.local_journal = new Array();
+$scope.totalDebit=0;
+$scope.totalCredit=0;
+
+$scope.initGlPost();
+
+</textarea>
+<script>
+
+$("#ab-delete").html("");
+
+</script>
+
+</div>	
+
+	<script>
+//		var outB = "<span class=" + '"' + "{{opts.updType!='CREATE'?'':'hidden'}}" + '" >'+ $('#ab-new').html() + "</span>";
+//		$('#ab-appOpt').html(outB);
+//		$('#ab-new').html('');
+	</script>
+
+<?php
+$xtmp = new appForm("VGL_JOURNALCT");
+?>
+
+
+<div class="row ab-border" style="margin:0px;padding:0px;">
+<form id="mainForm" name="mainForm"   ab-view="vgl_posting" ab-main="vgl_posting"  > 
+	<div class="col-lg-12" >
+	&nbsp;
+	<input  class="hidden" ab-btrigger="vgl_posting" ng-model="vgl_postingID" ng-init="vgl_postingID=1" /> 
+	</div>
+
+
+<script language='JavaScript' type='text/JavaScript'>
+
+var Key = {
+  LEFT:   37,
+  UP:     38,
+  RIGHT:  39,
+  DOWN:   40
+};
+
+/* IE: attachEvent, Firefox & Chrome: addEventListener */
+function _addEventListener(evt, element, fn) {
+  if (window.addEventListener) {element.addEventListener(evt, fn, false);}
+  else {element.attachEvent('on'+evt, fn);}
+}
+
+function onInputKeydown(evt) {
+  if (!evt) {evt = window.event;} // for IE compatible
+  var keycode = evt.keyCode || evt.which; // also for cross-browser compatible
+  if (keycode == Key.LEFT) {document.getElementById("info").innerHTML += "LEFT ";}
+  else if (keycode == Key.UP) {document.getElementById("info").innerHTML += "UP ";}
+  else if (keycode == Key.RIGHT) {document.getElementById("info").innerHTML += "RIGHT ";}
+  else if (keycode == Key.DOWN) {document.getElementById("info").innerHTML += "DOWN ";}
+  else {document.getElementById("info").innerHTML += "SOMEKEY ";}
+}
+
+function addevt() {
+  _addEventListener('keydown', document, onInputKeydown);
+}
+
+
+
+</script>
+
+<script>
+
+function setChartDisplay(state)
+{
+	if (state > 0)
+	{
+		// $("[ab-flst='ab-lister-vgl_chart']").removeClass("ab-hidden");
+	}
+	else
+	{
+		// $("[ab-flst='ab-lister-vgl_chart']").addClass("ab-hidden");
+	}
+}
+
+function chkKeyCode(ev)
+{
+ 
+	switch (window.event.keyCode) 
+	{
+		case 37:
+		// disp('Left key is pressed') // execute a function by passing parameter 
+		checkKeyPress(-1);
+		break;
+		case 38:
+		// disp('Up key is pressed') 
+		break;
+		case 39:
+		// disp('Right key is pressed') 
+		checkKeyPress(1);
+		break;
+		case 40:
+		// disp('Down key is pressed') 
+		break;
+	}
+}
+
+function disp(txt)
+{
+	var text = $("[ng-model='VGL_JNHE_REFER']").val()+txt+"\n";
+	$("[ng-model='VGL_JNHE_REFER']").val(text);
+}
+	
+function checkKeyPress(dir)
+{
+
+
+	var occ = 0;
+	var occFound = -1;
+	var lastVal = new Array();
+	var currVal = $("[ng-model='VGL_CHART_GLIDN']").val();
+	
+	$("[ab-dfl='ABDFLvgl_chart']").each(function()
+	{
+		
+		lastVal[occ] = "deflectVal(" + $(this).attr("dflval") + ",'VGL_CHART_GLIDN');" ;
+		if ($(this).attr("dflval") == currVal)
+		{
+			occFound = occ;
+		}
+		
+		
+		occ += 1;
+	});
+	
+	eval(lastVal[occFound + dir]);
+	$("[ng-model='ABSELvgl_chart']").focus();
+	
+}
+
+function searchAccounts()
+{
+	$("[ab-flst='ab-lister-vgl_chart']").removeClass("ab-hidden");
+	$("[ab-flst='ab-lister-vgl_chart']").removeClass("hidden");
+}
+
+$("[ng-model='ABSELvgl_chart']").attr("size",10);
+var exec = ""
+if ($("[ng-model='ABSELvgl_chart']").attr("onfocus"))
+{
+	exec = $("[ng-model='ABSELvgl_chart']").attr("onfocus");
+}
+exec += ";$('#submitAcc').attr('type','submit');setWrapper();"
+$("[ng-model='ABSELvgl_chart']").attr("onfocus",exec);
+
+var exec = ""
+if ($("[ng-model='ABSELvgl_chart']").attr("onblur"))
+{
+	exec = $("[ng-model='ABSELvgl_chart']").attr("onblur");
+}
+exec += ";$('#submitAcc').attr('type','button');"
+$("[ng-model='ABSELvgl_chart']").attr("onblur",exec);
+
+// $("[ab-flst='ab-lister-vgl_chart']").addClass("ab-hidden")
+
+//	$("[ab-flst='ab-lister-vgl_chart']").find("tr").each(function(){
+//	    
+//	    	$(this).click(function(){
+//	    		
+//		$("#EsubmitAcc").click();
+//		// $(this).addClass("ab-hidden");
+//		});
+//	});
+
+setChartDisplay(0);
+$("input").keydown(function()
+{
+chkKeyCode(event);	
+});
+
+
+function setWrapper()
+{
+	
+//	$("[class='mygrid-wrapper-divSm']").addClass('ab-wrapper-div');
+//	$("[class='mygrid-wrapper-divSm']").removeClass('mygrid-wrapper-divSm');
+	
+}
+
+function jrnChartHide(val)
+{
+	
+	$("[ab-flst='" + val + "']").addClass("hidden");
+	
+}
+function jrnChartClickSet(val)
+{
+	$("[ab-flst='" + val + "']").attr("onclick","jrnChartClickExe('" + val + "');")
+	
+}
+function jrnChartClickExe(val)
+{
+	$('#accountInsert').click();
+	
+	setTimeout('$("[ab-flst=' + "'" + val + "']" + '").removeClass("hidden")',1)
+	// alert($('#accountInsert').val());
+}
+
+</script>
+	<div class="col-lg-3" onmouseover="setWrapper();" >
+	
+	<input class="hidden" ng-model="lastVGL_JNHE_DOCDA"  ng-init="lastVGL_JNHE_DOCDA=''"  />
+
+<table style="width:100%;" >
+<tr>
+<td colspan=10 class="text-primary ab-strong " >
+<h4>
+<?php echo date("l jS \of F Y"); ?>
+</h4>
+
+</td>
+</tr>
+<tr>
+<td style="vertical-align:top;width:25%;">
+<input class="hidden" ng-model="VGL_JNHE_PSOUR"  ng-init="VGL_JNHE_PSOUR='VGL_JRN'" />
+<?php
+$grAttr = $xtmp->grAttrib;
+$grAttr["onmouseout"] = "$('#DOCDA').click();";
+$laAttr = $xtmp->laAttrib;
+$laAttr["ab-label"] = "STD_POST_DATE";
+$laAttr["class"] .= " small ";
+$inAttr = $xtmp->inAttrib;
+$hardCode = $xtmp->setDatePick("VGL_JNHE_DOCDA");
+$datePick = $hardCode;
+$xtmp->setFieldWrapper("view01","2.090","vgl_jnhe","VGL_JNHE_DOCDA","",$grAttr,$laAttr,$inAttr,$hardCode);
+echo $xtmp->currHtml;
+?>
+<script>
+$("[ng-model='VGL_JNHE_DOCDA']").attr("ng-click","clickDate()");
+</script>
+<span ng-if="VGL_JNHE_DOCDA" >
+<!--
+	<span ng-if="VGL_JNHE_DOCDA!=lastVGL_JNHE_DOCDA">{{VGL_JNHE_DOCDA}}=={{lastVGL_JNHE_DOCDA}}
+		<input class="hidden" ng-init="initGlPost(VGL_JNHE_DOCDA);lastVGL_JNHE_DOCDA=VGL_JNHE_DOCDA;" />
+		
+	</span>
+-->
+</span>
+
+<input id="getFiscal" class="hidden" ng-click="initGlPostTimed(VGL_JNHE_DOCDA)" />
+</td>
+<td  style="width:75%;"  class="text-center text-primary " >
+<span class="{{isPostDateValid()==true?'hidden':''}} text-danger" ><label ab-label="MES_DATE_INVALID"></label></span>
+<input class="hidden" id="accountInsert"  ng-click="insertAccount(VGL_CHART_GLIDN);"  value="AA"/>
+<span ng-repeat="pdate in vgl_jnentry "  class="{{isPostDateValid()!=true?'hidden':''}}" >
+
+	Posting Year:&nbsp;
+	<span class="ab-strong">{{pdate.VGL_JNHE_GLFIS}}</span>
+	&nbsp;&nbsp;Period:&nbsp;<span class="ab-strong">{{pdate.VGL_JNHE_GLPER}}
+</span>
+<span ng-init="lastVGL_JNHE_DOCDA=VGL_JNHE_DOCDA;"></span>
+</span>
+<?php
+// VGL_CHART00_GLIDN
+$grAttr = $xtmp->grAttrib;
+
+$laAttr = $xtmp->laAttrib;
+$inAttr = $xtmp->inAttrib;
+
+
+$laAttr['ab-label'] = "VGL_CHART00_GLIDN_SH";
+
+	$keepOrg = 0; 
+	$repeatIn = "vgl_chart";
+	$searchIn = "";
+	$refName = "vgl_chart"; // unique
+	$refModel = "VGL_CHART_GLIDN"; // unique
+	$repeatInRef = "idVGL_CHART"; //Unique
+	$searchRefDesc = "";//implode("&nbsp;&nbsp;",array("{{VGB_TERM_TERID}}","{{VGB_TERM_DESCR}}"));
+	$refDesc = implode("&nbsp;&nbsp;",array("<span class='text-primary'>     ","{{ab_rloop.VGL_CHART_GLIDN}}","{{ab_rloop.VGL_CHART_GLDES}}","{{ab_rloop.VGB_CURR_CURID}}","</span>"));
+	$refDetail = "";
+	$refDetailLink = "";
+	// $ignTrig =  "ng-click=" . '"' . "initGlPost(VGL_JNHE_DOCDA);hold=VGL_CHART_GLIDN;VGL_CHART_GLIDN='';VGL_CHART_GLIDND_F='';ABlstAlias('VGL_CHART_GLIDN','VGL_CHART_GLIDN','vgl_chart',0);VGL_CHART_GLIDN=hold;".'"';
+	$ignTrig =  "";
+	$hardCode = $xtmp->setListerField($keepOrg,$repeatIn,$searchIn,$refName,$refModel,$searchInRef,$searchRefDesc,$repeatInRef,$refDesc,$refDetail,$refDetailLink,$ignTrig);
+	
+$xtmp->setFieldWrapper("view02","2.5","vgl_chart","VGL_CHART_GLIDN","",$grAttr,$laAttr,$inAttr,$hardCode);
+
+$chartLister = $hardCode;
+
+?>
+
+<?php
+$xtmp = new appForm("stdSearchDsp");
+$sparm = array();
+$sparm["searchLabel"] = "STD_LABEL_EMPTY";
+$sparm["searchTable"] = "vgl_chart";
+$sparm["searchJoin"] = "vgb_curr:idVGB_CURR = VGL_CHART_CURID";
+
+
+$sparm["orderBy"] = "VGL_CHART_GLIDN ASC";
+
+$sparm["searchResult"] = "vgl_chart";
+$sparm["searchFilter"] = "hidden";
+$sparm["filterExclude"] = "";
+$sparm["filterAuto"] = "";
+$sparm["callBack"] = "";
+
+$chartLister = $xtmp->setSearchMaster($sparm);
+
+$chartLister .= <<<EOC
+<div id="vsl_chartView" class=" ab-container ab-border hidden" style="position:fixed;z-index:1;">
+<div class="ab-wrapper-divmd">
+<table class="ab-border ab-spaceless" style="width:100%;" >
+<tr class="well text-primary ab-strong">
+<td style="width:5%;" ></td>
+<td style="width:85%;" >Gl Account</td>
+<td style="width:10%;" onclick="$('#vsl_chartView').addClass('hidden');" class="bg-primary text-center" >X</td>
+</tr>
+</table>
+</div>
+
+<div class="ab-wrapper-divmd ">
+
+<table class="table-striped" style="width:100%;" >
+<tr>
+<td style="width:1%;" ></td>
+<td style="width:25%;" ></td>
+<td style="width:3%;" ></td>
+<td style="width:70%;" ></td>
+<td style="width:1%;" ></td>
+
+</tr>
+<tr 	class="ab-pointer"
+	ng-repeat="acc in vgl_chart" 
+	ng-click="insertAccount(acc.idVGL_CHART);" 
+	onclick='$("#vsl_chartView").addClass("hidden");'
+	onmouseover="$(this).addClass('text-primary ab-strong')"
+	onmouseout="$(this).removeClass('text-primary ab-strong')"
+	>
+<td>&nbsp;</td>	
+<td>{{acc.VGL_CHART_GLIDN}}&nbsp;({{acc.VGB_CURR_CURID}})</td>
+<td>&nbsp;</td>
+<td >{{acc.VGL_CHART_GLDES}}</td>
+<td>&nbsp;</td>
+</tr>
+</table>
+</div>
+</div>
+<script>
+$("[ng-model='ABsPattern{$sparm["searchResult"]}']").focus(function()
+{
+	$("#vsl_chartView").removeClass("hidden");
+	// $(this).select()
+});
+
+
+</script>
+
+
+EOC;
+
+
+?>
+<div abid="date">
+<!-- date pick
+<?php echo $datePick; ?>
+-->
+</div>
+<div abid="lister">
+<!-- lister
+<?php echo $hardCode; ?>
+-->
+</div>
+<!--
+onclick='jrnChartClickSet(" . '"ab-lister-vgl_chart");' ."'" . ' 							
+<input ng-model="ABSELvgl_chart" size="2" placeholder="Select" ng-change="ABfetchSim(ABSELvgl_chart,rawResult.vgl_chart,'ABDFLvgl_chart');" value="" style="background-color:white;" class="small ab-spaceless text-primary ng-valid ng-dirty" onblur="$(this).val('');" onfocus="undefined;$(this).select();" title="{ng=ABSELvgl_chart)" ab-orgval="">
+-->							
+
+<div>
+<table style="width:100%;" >
+<tr>
+<td style="width:80%;">
+
+<?php
+// echo $xtmp->currHtml;
+ ?>
+
+</td>
+
+</tr>
+
+
+</table>
+
+	
+
+
+	</div>
+</td>
+</tr>
+
+<tr>
+<td colspan=2>
+<span ab-label="STD_REF" class="text-primary ab-strong" >Ref...</span>
+<br>
+<a id="info" rows="5" cols="35"></a>
+<textarea style="width:100%;" rows=5 placeholder="posting reference" ng-model="VGL_JNHE_REFER" onfocus="jrnChartHide('ab-lister-vgl_chart',);"  ></textarea>
+<input id="autoDistribute" class="hidden" ng-click="distributeBal()" />
+</td>
+</tr>
+
+</table>
+
+	</div>
+	
+	<div class="col-lg-8" >
+		<div class="ab-wrapper-div">
+		<table style="width:100%;" class="{{!AB_CPARM?'hidden':''}} ab-border" >					
+		<tr class="ab-strong" neg-repeat="jrn in local_journal | AB_noDoubles:'idVGL_JNHE' " n2g-if="jrn.idVGL_JNHE == idVGL_JNHE" >
+			<td style="width:10%;"> </td>
+			<td style="width:15%;"> Account # </td>
+			<td style="width:30%;"> Description </td>
+			<td style="width:15%;" class="text-right"> Debit&nbsp;</td>
+			<td style="width:15%;" class="text-right"> Credit&nbsp;</td>
+			<td style="width:15%;" class="text-right">
+				<span ng-repeat="curr in vgb_curr | AB_noDoubles:'idVGB_CURR' "  ng-if="curr.idVGB_CURR==AB_CPARM.VGB_COMPANY.vgb_cust[0].VGB_CUST_CURID" >
+					&nbsp;({{curr.VGB_CURR_CURID }})
+				</span>
+			
+			</td>
+		</tr>
+		<tr><td></td></tr>
+		<tr ab-formlist="jnhe_list" ng-repeat="jrn in local_journal | AB_noDoubles:'idVGL_JNDE'  " cwlass="{{jrn.local_trash==0?'':'text-danger ab-strong'}}"  >
+			
+			<td >
+			
+				<input ng-model="jrn.local_trash" class="hidden" />
+				<div class="text-primary ab-pointer" 
+				>
+				
+				<span title="click to remove account" ng-click="jrn.local_trash = 1 - jrn.local_trash;insertAccount(0);"
+				class="t2ext-primary aeb-pointer" 
+				onmouseover="$(this).addClass('text-danger');" 
+				onmouseout="$(this).removeClass('text-danger');"	
+				
+				>
+				
+			 
+					Trash
+					
+					<span class="glyphicon glyphicon-trash"></span>
+				
+				</span>
+				</div>
+			</td>
+			<td style="color:inherit;" >
+				<input class="hidden" ng-model="jrn.VGL_CHART_GLIDN" />
+				<input class="hidden" ng-model="jrn.idVGL_CHART" />
+				<input class="hidden" ng-model="jrn.VGL_CHART_CURID" />
+				{{jrn.VGL_CHART_GLIDN}}
+				<span ng-repeat="curr in vgb_curr | AB_noDoubles:'idVGB_CURR' "  ng-if="curr.idVGB_CURR==jrn.VGL_CHART_CURID" >
+					&nbsp;({{curr.VGB_CURR_CURID }})
+				</span> 
+			</td>
+			<td>
+				<input class="hidden" ng-model="jrn.VGL_CHART_GLDES" />
+				{{jrn.VGL_CHART_GLDES}}
+			</td>
+			<td class="text-right">
+
+				<input id="debitId{{$index}}" ng-if="jrn.VGL_JNDE_CRE_AMT==0" 
+				ng-model="jrn.VGL_JNDE_DEB_AMT" size=8 class="ab-borderless text-right "  
+				ng-blur='distributeBal();jrn.VGL_JNDE_DEB_AMT=ABGetNumberFn("fmt-curr",jrn.VGL_JNDE_DEB_AMT)' />&nbsp;
+			
+				<span ng-if="jrn.VGL_JNDE_CRE_AMT!=0" >
+					<input  ng-model="jrn.VGL_JNDE_DEB_AMT" size=8 class="hidden ab-borderless text-right " />
+				</span>
+
+			</td>
+			<td class="text-right">
+				<input id="creditId{{$index}}" ng-if="jrn.VGL_JNDE_DEB_AMT==0" ng-model="jrn.VGL_JNDE_CRE_AMT" size=8 class="ab-borderless text-right "  ng-blur='distributeBal();jrn.VGL_JNDE_CRE_AMT=ABGetNumberFn("fmt-curr",jrn.VGL_JNDE_CRE_AMT)' />&nbsp;
+				<span ng-if="jrn.VGL_JNDE_DEB_AMT!=0" >
+					<input ng-model="jrn.VGL_JNDE_CRE_AMT" size=8 class="hidden ab-borderless text-right " />
+					
+				</span>
+			</td>
+			<td class="text-right small ab-strong">
+				<span ng-repeat="curr in vgb_curr | AB_noDoubles:'idVGB_CURR' "  ng-if="curr.idVGB_CURR==jrn.VGL_CHART_CURID" >
+					<span ng-if="curr.VGB_CURR_CURAT!=1">
+						{{computeExchange(jrn,curr.VGB_CURR_CURAT)}}
+						&nbsp;@&nbsp;{{curr.VGB_CURR_CURAT}}&nbsp;
+					</span>
+				</span> 
+
+			</td>
+		</tr>
+		<tr>
+
+		<td colspan=3>
+			<?php echo $chartLister; ?> 
+		</td>
+<!--		
+		<td colspan=4>
+			<form >
+			<table style="width:100%;" >
+				<tr>
+				
+					<td style="width:10%;" class="text-primary ab-strong" >
+						<span ab-label="VGL_CHART00_GLIDN_SH" onclick="searchAccounts();" >Account</span>
+					</td>
+					
+					<td style="width:6%;" class="hidden" >
+						<input id="EsubmitAcc" type="submit"  
+						value="Insert" class="text-primary ab-pointer small ab-strong ab-borderless" 
+						
+						ng-click="insertAccount(VGL_CHART_GLIDN);" ab-label="STD_REFRESH" />
+					</td>
+														
+					<td  style="width:70%;"> 
+						<?php // echo $chartLister; ?> 
+					</td>
+
+				</tr>
+			</table>
+			</form>
+		</td>
+-->
+		</tr>					
+		<tr class="ab-strong">
+			<td></td>
+			<td></td>
+			<td></td>
+			<td class="text-right"  >
+			<input class="hidden ab-borderless text-right "   ng-model="totalDebit" size=8 />
+			<span style="border-top:solid;border-width:1px;">
+			&nbsp;{{totalDebit}}&nbsp;
+			</span>
+			</td>
+			<td class="text-right"  >
+			<input class="hidden ab-borderless text-right " ng-model="totalCredit" size=8 />
+			<span style="border-top:solid;border-width:1px;">
+			&nbsp;{{totalCredit}}&nbsp;
+			</span>
+			</td>
+			<td class="text-right">
+			&nbsp;
+			</td>						
+		</tr>
+		<tr class="ab-strong">
+			<td class="text-right">
+			&nbsp;
+			</td>						
+		</tr>					
+		</table>
+
+		<table style="width:100%;" class="{{!rawResult.todayPost?'hidden':''}}" >
+		<tr class="ab-strong" >
+			<td style="width:30%;"> Posted today by: {{rawResult.todayPost[0]["VGL_JNHE_USLNA"]}}
+			</td>
+			<td style="width:10%;"> Account # </td>
+			<td style="width:35%;"> Description </td>
+			<td style="width:10%;" class="text-right"> Debit</td>
+			<td style="width:10%;" class="text-right"> Credit</td>
+			<td style="width:5%;" ></td>
+		</tr>
+		<tr class="ab-border">
+			<td colspan=100></td>
+		</tr>
+		</table>					
+		<table class="ab-border" style="width:100%;" ng-repeat="head in rawResult.todayPost | AB_noDoubles:'idVGL_JNHE' | AB_sortReverse:'VGL_JNHE_CDATE' ">
+		<tr >
+			<td style="width:30%;padding:2px;vertical-align:top;" class="ab-strong" > 
+			Tr:{{head.VGL_JNHE_TRNID}}&nbsp; 
+			<span class="text-primary small">
+			{{head.VGL_JNHE_CDATE}}
+			</span>
+			<div class="small">
+			{{head.VGL_JNHE_REFER}}
+			</div>
+			</td>
+			<td style="width:70%;vertical-align:top;">
+									
+			<table style="width:100%;" >
+			<tr style="vertical-align:top;" ng-repeat="jrn in rawResult.todayPost | AB_noDoubles:'idVGL_JNDE' " ng-if="jrn.idVGL_JNHE == head.idVGL_JNHE" >
+				
+				<td style="width:10%;vertical-align:top;">
+					{{jrn.VGL_CHART_GLIDN}}
+				</td>
+				<td style="width:55%;">
+					{{jrn.VGL_CHART_GLDES}}
+				</td>
+				<td style="width:15%;" class="text-right">
+					<span ng-if="jrn.VGL_JNDE_GLAMT>0" >{{ABGetNumberFn("fmt-curr",jrn.VGL_JNDE_GLAMT)}}</span>&nbsp;
+				</td>
+				<td style="width:15%;" class="text-right">
+					<span ng-if="jrn.VGL_JNDE_GLAMT<0" >{{ABGetNumberFn("fmt-curr",(jrn.VGL_JNDE_GLAMT * -1)) }}</span>&nbsp;
+				</td>
+				<td style="width:5%;">
+				</td?
+				
+			</tr>
+			<tr >
+				<td colspan=100>&nbsp;</td>
+			</tr>
+			</table>
+			</td>
+			</tr>
+			</table>
+		</div>	
+	</div>
+</form>	
+</div>
+<div class="hidden">
+<input ab-mpp="0" value="0" />
+</div>
+
+	
