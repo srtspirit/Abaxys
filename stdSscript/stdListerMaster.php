@@ -48,6 +48,10 @@ abstract class ListerMaster extends dbMaster
 			$this->paramQueryFromWhere = $this->buildGroupQueryFromWhere($rootGroup, $group);
 			$queryCount = "select ". " count(*) as " . $this->count . " " . $this->paramQueryFromWhere;
 			
+			/* AndreyV 20170628
+			Since we are using pages we don't need splitting up and counting anymore.
+			We just return list of id with limit clause
+			
 			//get the quantity of elements in this group to check if we it's less than limit for showing them all in a screen
 			$tbls = new dbMaster($this->dataSource,$this->schema);
 			
@@ -74,6 +78,15 @@ abstract class ListerMaster extends dbMaster
 				$this->splitGroupRecours($this->paramQueryFromWhere);
 				$this->assignResultToThis($this->result);
 			}
+			
+			*/
+			
+			$query = "SELECT DISTINCT " . $this->id . " FROM(" . $this->buildSelectIdQuery() . $this->paramQueryFromWhere . ") x LIMIT 5";
+			$tbls = new dbMaster($this->dataSource,$this->schema);
+			$tbls->dbPdoPrep($query,"","");
+			$this->assignResultToThis($tbls);
+			
+			//AndreyV 20170628 end
 		}
 		
 		protected function buildSelectIdQuery()
