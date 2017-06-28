@@ -167,7 +167,7 @@ $trig = <<<EOD
 			 
 		 	( SELECT * FROM vpu_orhe 
 		LEFT JOIN vgb_addr  ON idVGB_ADDR = VPU_ORHE_BTADD  [=COND:vgb_addr=] 
-		LEFT JOIN vtx_schh  ON idVTX_SCHH = VGB_ADDR_SCHID  [=COND:vtx_schh=] 
+		LEFT JOIN vtx_schh  ON idVTX_SCHH = VGB_ADDR_PCHID  [=COND:vtx_schh=] 
 		LEFT JOIN vtx_sche  ON VTX_SCHE_SCHID = idVTX_SCHH  [=COND:vtx_sche=] 
 								
 		WHERE [=WHERE=]  [=COND:vpu_orhe=]  [=LIMIT=] ) tx		
@@ -780,7 +780,6 @@ EOD;
 		if ($dtaObj["VPU_INVOICE"] == "vpu_invoice")
 		{
 			$this->localPost = $dtaObj;
-			
 	 		$wTblsInvoice = new vpu_invoice($this->tblInfo->schema);
 	  		$wTblsInvoice->dbUpdRec($dtaObj);
 			foreach($wTblsInvoice as $name => $value)
@@ -1277,15 +1276,31 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 				$warObj["TBLNAME"] = "vin_wars";
 				
 				// $warObj["idVIN_WARS"] = 0;
-				$warObj["VIN_WARS_SFWAR"] = "0";
+				$warObj["idVIN_WARS"] = "0";
 				
 				$wWars = new dbMaster("vin_wars",$this->tblInfo->schema);
 				$wWars->dbFindFrom($warObj);
 				$this->wWars = $wWars;
-								
-				if (count($wWars->result) > 0 )
+				
+				$occ = 0;
+				while ($occ < count($wWars->result))
 				{
-					$dtaObj["VPU_ORDE_WARID"] = $wWars->result[0]["idVIN_WARS"];
+					if ($occ == 0 )
+					{
+						$dtaObj["VPU_ORDE_WARID"] = $wWars->result[$occ]["idVIN_WARS"];
+						$dtaObj["VPU_ORDE_LOCID"] = $wWars->result[$occ]["VIN_WARS_MALOC"];
+						// if no records set to default will use first
+					}
+					if ($wWars->result[$occ]["VIN_WARS_SFWAR"] == "1")
+					{
+						$dtaObj["VPU_ORDE_WARID"] = $wWars->result[$occ]["idVIN_WARS"];
+						$dtaObj["VPU_ORDE_LOCID"] = $wWars->result[$occ]["VIN_WARS_MALOC"];
+						$occ = count($wWars->result);
+						
+						// if record set to default will use this and stop looping
+					}
+					
+					$occ += 1;
 				}
 				
 			}
@@ -1306,14 +1321,16 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 				
 		  		$wItem = new dbMaster("vin_wars",$this->tblInfo->schema);
 				$wItem->dbFindMatch($tmpObj);
-				if (count($wItem->result) > 0 )
+				
+				if (count($wItem->result) > 0)
 				{
 					$dtaObj["VPU_ORDE_LOCID"] = $wItem->result[0]["VIN_WARS_MALOC"];
-				}
-				
+				}				
 			}
 			
 		}						
+		
+		
 
 		return $dtaObj;
 	}
@@ -2707,8 +2724,34 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 			$seq= "";
 		
 		}
-	
-		return $seq;
+		
+		$xSeq = explode(",",$this->AB_CPARM["VPU_STEPS_SC"]["SEL01"]);
+		$occ = 0;
+		while ($occ < count($xSeq))
+		{
+						
+			if ($xSeq[$occ] && strpos("x".$seq,$xSeq[$occ]) > 0)
+			{
+				$seq = substr($seq,0,strpos($seq,$xSeq[$occ])) .  substr($seq,strpos($seq,$xSeq[$occ])+strlen($xSeq[$occ]));
+			}
+			$occ += 1;
+		}	 
+
+		$cSeq = explode(",",$seq);
+		$occ = 0;
+		$ret = "";
+		$sep = "";
+		while ($occ < count($cSeq))
+		{
+			if ($cSeq[$occ] != "")
+			{
+				$ret .= $sep . $cSeq[$occ];
+			}
+			$sep = ",";
+			$occ += 1;
+		}
+		
+		return $ret;
 	}
 	
 	function IV_VPU_initStepIdFields($obj)
@@ -2965,12 +3008,19 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 		}
 
 		
+		if ($this->errorCode == 0)
+		{
+			$recSet = $this->insertNewCosting($ePost,$recSet);
+		}
+		
+		$this->newRecSet = $recSet;
+		
 		$dtaSet["result"] = $recSet;
 		$dtaSet["delID"] = $ePost;
 
 		$this->updateAvgComp = array();
 		
-		if(trim($invoiceObj["deliveryID"])!="" && count($recSet)>0)
+		if(trim($invoiceObj["deliveryID"])!="" && count($recSet)>0 )
 		{
 			$occ = 0;
 			while ($occ < count($delID) && $this->errorCode == 0 )
@@ -2985,6 +3035,8 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 				
 				// Will be used to distribute EXP - BOR over products on qty%
 				$avgCostComp = array();
+				$avgCostAmount = $this->getCostForAverage($ePost["RECSET"],$delID[$occ]);
+				
 				
 				$wocc = 0;
 				while ($wocc < count($recSet))
@@ -3021,14 +3073,29 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 							}
 							
 							// Will be used to distribute EXP - BOR over products on qty%
-							if (!$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VIN_ITMWAR_WARID"] ])
+							if (!$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ])
 							{
-								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VIN_ITMWAR_WARID"] ] = array();
-								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VIN_ITMWAR_WARID"] ]["qty"] = 0;
-								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VIN_ITMWAR_WARID"] ]["total"] = 0;
+								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ] = array();
+								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["qty"] = 0;
+								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["total"] = 0;
+								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["per"] = 0;
+								$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["avgc"] = $avgCostAmount;
 							}
-							$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VIN_ITMWAR_WARID"] ]["qty"] += ($recSet[$wocc]["VPU_ORST_ORDQT"]*1);
-							$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VIN_ITMWAR_WARID"] ]["total"] += ($totAmt*1);
+							$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["qty"] += ($recSet[$wocc]["VPU_ORST_ORDQT"]*1);
+							$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["total"] += ($totAmt*1);
+							
+							// Find Percentage to apply to average cost
+							$pocc = 1;
+							while ($pocc < count($ePost["RECSET"]) )
+							{
+								if($ePost["RECSET"][$pocc]["idVPU_ORST"] == $recSet[$wocc]["idVPU_ORST"])
+								{
+									$avgCostComp[ $recSet[$wocc]["VPU_ORDE_ITMID"] . "-" . $recSet[$wocc]["VPU_ORDE_WARID"] ]["per"] += $ePost["RECSET"][$pocc]["percent"];
+									$pocc = count($ePost["RECSET"]);
+									// Terminate loop
+								}
+								$pocc += 1;
+							}
 							
 							// Update vpu_orde if average cost changed
 							if ($recSet[$wocc]["VIN_ITMWAR_AVGCP"] != $recSet[$wocc]["VPU_ORDE_COSTP"])
@@ -3069,7 +3136,13 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 				}
 				
 				// Compute new average cost
-				$this->updateAvgCost($avgCostComp,$dtaSet["EXPCHARGED"],$dtaSet["EXPBORNED"],$ePost);
+				// $this->updateAvgCost($avgCostComp,$dtaSet["EXPCHARGED"],$dtaSet["EXPBORNED"],$ePost);
+				
+				$this->uACData = array();
+				$this->uACData["avgCostComp"] = $avgCostComp;
+				$this->uACData["avgCostAmount"] = $avgCostAmount;
+				$this->uACData["ePost"] = $ePost;
+				$this->updateAvgCost($avgCostComp,$avgCostAmount,0,$ePost);
 				
 				// Add Taxes Central Tax calculate Taxes calculated on total taxable
 				$taxCalc = new vgl_taxing($this->tblInfo->schema);
@@ -3130,6 +3203,156 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 		
 	}
 	
+	function getCostForAverage($recSet,$delId)
+	{
+		$amount = 0;
+		$occ = 1;
+		while ($occ < count($recSet))
+		{
+			if ($recSet[$occ]["VPU_ORST_DELID"] == $delId)
+			{
+				$newCost =  $recSet[$occ]["RECSET"];
+//				if (count($newCost) == 0) 
+//				{
+//					$amount = $recSet[$occ]["VPU_ORDE_OUNET"];
+//				}; // If not costing yet
+				
+				$occ = count($recSet);// Find first and do once		
+				
+				$wocc = 0;
+				while ($wocc < count($newCost))
+				{
+					if ($newCost[$wocc]["ignore"] == 0)
+					{
+						$amount += $newCost[$wocc]["amount"];
+					}
+					$wocc += 1;
+				}
+			}
+			
+			$occ += 1;
+		}
+		
+		return $amount;
+	}		
+		
+	
+	
+	function insertNewCosting($ePost,$recSet)
+	{
+		$newPost = $ePost["RECSET"];
+		
+		$newLine = 0;
+		$occ = 1;
+		while ($occ < count($newPost))
+		{
+			if ($newPost[$occ]["VPU_ORST_DELID"] == $ePost["deliveryID"])
+			{
+				
+				$newCost =  $newPost[$occ]["RECSET"];
+				if ($newLine == 0)
+				{
+					$trig = "SELECT MAX(VPU_ORDE_ORLIN) AS lastLine FROM vpu_orde where VPU_ORDE_ORNUM = :VPU_ORDE_ORNUM";
+					$vobj["VPU_ORDE_ORNUM"] = $newPost[$occ]["idVPU_ORHE"];
+					$tobj["VPU_ORDE_ORNUM"]=PDO::PARAM_INT;
+					$wTbl = new dbMaster("VPU_ORDE",$this->tblInfo->schema);
+					$wTbl->dbPdoPrep($trig,$vobj,$tobj);
+					$newLine = $wTbl->result[0]["lastLine"];
+					
+				}
+				
+				$occ = count($newPost); // Find first and do once		
+				
+				$wocc = 0;
+				while ($wocc < count($newCost))
+				{
+					if ($newCost[$wocc]["orstId"] == 0)
+					{
+						
+						$newLine += 10;	
+						
+						$recSet = $this->insertNewItem($newCost[$wocc],$recSet,$newLine,$ePost);
+					}
+					$wocc += 1;
+				}
+			}
+			
+			$occ += 1;
+		}
+		
+		return $recSet;
+	}
+	
+	function insertNewItem($newCost,$recSet,$newLine,$ePost)
+	{
+		
+		$occ = 0;
+		while ($occ < count($recSet))
+		{
+			if ($recSet[$occ]["VPU_ORST_DELID"] == $newCost["delId"])
+			{
+				$inRec = $recSet[$occ];
+				$occ = count($recSet);
+			}
+			$occ += 1;
+		}
+
+		if ($inRec)
+		{
+			
+			$trig = "SELECT * FROM vin_item where idVIN_ITEM = :idVIN_ITEM";
+			$vobj["idVIN_ITEM"] = $newCost["idVIN_ITEM"];
+			$tobj["idVIN_ITEM"]=PDO::PARAM_INT;
+			$wTbl = new dbMaster("vin_item",$this->tblInfo->schema);
+			$wTbl->dbPdoPrep($trig,$vobj,$tobj);
+			$itemLine = $wTbl->result[0];			
+
+			foreach($itemLine as $name => $value)
+			{
+				 $inRec[$name] = $value;
+			}
+
+			
+			unset($inRec["idVPU_ORDE"]);
+			unset($inRec["VPU_ORDE_CDATE"]);
+			$inRec["PROCESS"] = $ePost["PROCESS"];
+			$inRec["SESSION"] = $ePost["SESSION"];
+
+			$inRec["VPU_ORDE_ORLIN"] = $newLine;
+			$inRec["VPU_ORDE_OLTYP"] = $newCost["oltyp"];
+			$inRec["VPU_ORDE_ITMID"] = $itemLine["idVIN_ITEM"];
+			$inRec["VPU_ORDE_DESCR"] = $itemLine["VIN_ITEM_DESC1"];
+			$inRec["VPU_ORDE_SAUOM"] = $itemLine["VIN_ITEM_UNITM"];
+			$inRec["VPU_ORDE_FACTO"] = $itemLine["VIN_ITEM_FACTO"];
+			$inRec["VPU_ORDE_QTUOM"] = $itemLine["VIN_ITEM_UNITM"];
+			$inRec["VPU_ORDE_ORDQT"] = 1;
+			$inRec["VPU_ORDE_OUNET"] = $newCost["amount"];
+			$inRec["VPU_ORDE_LSPEC"] = "";
+			$inRec["VPU_ORDE_UNSET"] = $itemLine["VIN_ITEM_UNSET"];
+			$woTbl = new dbMaster("vpu_orde",$this->tblInfo->schema);
+			$woTbl->dbInsRec($inRec);
+			$inRec["idVPU_ORDE"] = $woTbl->insertId;
+			
+			unset($inRec["idVPU_ORST"]);
+			unset($inRec["VPU_ORST_CDATE"]);
+			$inRec["VPU_ORST_STPSQ"] = 10;
+			$inRec["VPU_ORST_ORLIN"] = $inRec["idVPU_ORDE"];
+			$inRec["VPU_ORST_ORDQT"] = 1;
+			$inRec["VPU_ORST_STEPS"] = "QQ_PURG";
+			$inRec["VPU_ORST_QTUOM"] = $itemLine["VIN_ITEM_UNITM"];
+			$inRec["VPU_ORST_FACTO"] = $itemLine["VIN_ITEM_FACTO"];
+			$wsTbl = new dbMaster("vpu_orst",$this->tblInfo->schema);
+			$wsTbl->dbInsRec($inRec);
+			$inRec["idVPU_ORST"] = $wsTbl->insertId;
+			
+			$recSet[count($recSet)] = $inRec;
+		}
+		$this->woTbl = $woTbl;
+		$this->wsTbl = $wsTbl;
+		return $recSet;
+		
+	}
+
 	function initTaxAmt($txRec)
 	{
 		$occ = 0;
@@ -3157,7 +3380,9 @@ $this->VPU_ORHE_ODATE .= $dtaObj["VPU_ORHE_ODATE"];
 				foreach($avgCostDta as $name => $value)
 				{
 					$itemQty = abs(($avgCostDta[$name]["qty"]*1));
-					$avgCostDta[$name]["per"] = $itemQty * 100 / $totalQty;
+					
+					// Not performe at this level new update % relies on user input
+					// $avgCostDta[$name]["per"] = $itemQty * 100 / $totalQty;
 					$this->updateInventValue($name,$avgCostDta[$name],$exp,$bor,$ePost);
 				}
 				
@@ -3392,6 +3617,7 @@ class vpu_invoice extends dbMaster
 		}		
 		
 		$this->postRecords = array();
+		$this->alainRecords = array();
 		
 		$postOcc = 0;
 		while ($postOcc < count($deliveryID) && $this->errorCode == 0)
@@ -3416,6 +3642,8 @@ class vpu_invoice extends dbMaster
 	  		$wTblsORHE = new vpu_orhe($this->tblInfo->schema);
 	  		$wTblsORHE->brTrConn = $this->masterTranConn;
 	  		$wTblsORHE->updDelivery($dtaObj);
+	  		
+	  		$this->alainRecords[$postOcc] = $wTblsORHE;
 			foreach($wTblsORHE as $name => $value)
 			{
 				 $this->$name = $value;
@@ -3817,3 +4045,5 @@ require_once "VGB_GETNFNU.php";
 require_once "VAP_FINANCE.php";
 
 ?>
+
+                                                          

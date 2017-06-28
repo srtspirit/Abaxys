@@ -1115,13 +1115,33 @@ EOD;
 			return;
 		}
 		
+		// AC 20170613 New logic Credit hold
+		// if customer on credit hold set order on credit hold
+		$custObj = array();
+		$custObj["PROCESS"] = $dtaObj["PROCESS"];
+		$custObj["SESSION"] = $dtaObj["SESSION"];
+		$custObj["idVGB_CUST"] = $dtaObj["VSL_ORHE_BTCUS"];		
+		$cust = new dbMaster("vgb_cust",$this->tblInfo->schema);
+		$cust->dbFindMatch($custObj);
+		if ($cust->errorCode > 0 || count($cust->result) == 0)
+		{
+			$this->errorCode = 6677;
+			$this->errorCodeText[count($this->errorCodeText)] = "6677 - Customer not found ";
+		}
+		else
+		{
+			if ($cust->result[0]["VGB_CUST_CRHOL"] == 1 && $dtaObj["VSL_ORHE_CRHOL"] != 1)
+			{
+				$dtaObj["VSL_ORHE_CRHOL"] = 1;
+				$this->errorCodeText[count($this->errorCodeText)] = "8976 - Order has been set on credit hold ";
+			}
+		}		
 			
 		$E_POST = $dtaObj;
 		// $E_POST = setEpost($this->tblInfo->schema,$dtaObj);
 		
 		$this->E_POST = $E_POST;
 		$this->local_POST = $E_POST;
-		
 
 		// We need a current record list of all VSL_ORST 
 		$tmpObj["PROCESS"] = $E_POST["PROCESS"];
@@ -1203,7 +1223,22 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 
 		// Validate all lots before. Aborts all if one not valid 
 		$occ = 1;
-		$lotValid = true;		
+		$lotValid = true;
+		
+			
+		
+		
+		// AC 20170613 New logic Credit hold advance to PACK or beyond not valid
+		if ($this->setNewDocument >= "HH_PACK" && $E_POST["VSL_ORHE_CRHOL"] == "1")
+		{
+			$this->errorCode = 8977;
+			$this->errorCodeText[count($this->errorCodeText)] = "8977 - Customer on credit hold ";
+			$this->errorCodeText[count($this->errorCodeText)] = "........ Cannot advance beyond " . $this->AB_CPARM["VSL_STEPS_DESCR"]["GG_RELE"];
+			$this->dbFnct = "dbUpdRec";
+
+			return;
+		}
+						
 		
 		while ($occ < count($recSet) && $lotValid == true)
 		{
@@ -1291,9 +1326,12 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 						
 						$tmpObj = $recSet[$occ];
 						$tmpObj["VIN_CUST_BPART"] = $E_POST["VSL_ORHE_BTCUS"];	
-						$tmpObj["VIN_CUST_ITMID"] = $tmpObj["VSL_ORDE_ITMID"];	
-						$tmpObj["VIN_CUST_LPPAID"] = $tmpObj["VSL_ORDE_OUNET"];	
-						$tmpObj["VIN_CUST_LPDATE"] = $this->getDateFormed();
+						$tmpObj["VIN_CUST_ITMID"] = $tmpObj["VSL_ORDE_ITMID"];
+						if ($this->setNewDocument > "JJ_INVO")
+						{ 	
+							$tmpObj["VIN_CUST_LPPAID"] = $tmpObj["VSL_ORDE_OUNET"];	
+							$tmpObj["VIN_CUST_LPDATE"] = $this->getDateFormed();
+						}
 						$wT = new vin_cust($this->tblInfo->schema);
 						$wT->brTrConn = $this->masterTranConn;
 						$wT->vin_cust_lastPrice($tmpObj);
@@ -1334,8 +1372,11 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 								$tmpObj = $recSet[$occ];
 								$tmpObj["VIN_CUST_BPART"] = $E_POST["VSL_ORHE_BTCUS"];	
 								$tmpObj["VIN_CUST_ITMID"] = $tmpObj["VSL_ORDE_ITMID"];	
-								$tmpObj["VIN_CUST_LPPAID"] = $tmpObj["VSL_ORDE_OUNET"];	
-								$tmpObj["VIN_CUST_LPDATE"] = $this->getDateFormed();
+								if ($this->setNewDocument > "JJ_INVO")
+								{ 	
+									$tmpObj["VIN_CUST_LPPAID"] = $tmpObj["VSL_ORDE_OUNET"];	
+									$tmpObj["VIN_CUST_LPDATE"] = $this->getDateFormed();
+								}
 								$wT = new vin_cust($this->tblInfo->schema);
 								$wT->brTrConn = $this->masterTranConn;
 								$wT->vin_cust_lastPrice($tmpObj);
@@ -1593,17 +1634,33 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 				$warObj["TBLNAME"] = "vin_wars";
 				
 				// $warObj["idVIN_WARS"] = 0;
-				$warObj["VIN_WARS_SFWAR"] = "0";
+				$warObj["idVIN_WARS"] = "0";
 				
 				$wWars = new dbMaster("vin_wars",$this->tblInfo->schema);
 				$wWars->dbFindFrom($warObj);
 				$this->wWars = $wWars;
 								
-				if (count($wWars->result) > 0 )
+				$occ = 0;
+				while ($occ < count($wWars->result))
 				{
-					$dtaObj["VSL_ORDE_WARID"] = $wWars->result[0]["idVIN_WARS"];
+					if ($occ == 0 )
+					{
+						$dtaObj["VSL_ORDE_WARID"] = $wWars->result[$occ]["idVIN_WARS"];
+						$dtaObj["VSL_ORDE_LOCID"] = $wWars->result[$occ]["VIN_WARS_MALOC"];
+						// if no records set to default will use first
+					}
+					if ($wWars->result[$occ]["VIN_WARS_SFWAR"] == "1")
+					{
+						$dtaObj["VSL_ORDE_WARID"] = $wWars->result[$occ]["idVIN_WARS"];
+						$dtaObj["VSL_ORDE_LOCID"] = $wWars->result[$occ]["VIN_WARS_MALOC"];
+						$occ = count($wWars->result);
+						
+						// if record set to default will use this and stop looping
+					}
+					
+					$occ += 1;
 				}
-				
+								
 			}
 			
 		}
@@ -1681,6 +1738,12 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 				$recSet[$occ]["VSL_ORST_STEPS"] = $this->IV_VSL_FIRST_STEP("",$this->fetchResult[0]);
 				$recSet[$occ]["VSL_ORST_WARID"] = $dtaObj["VSL_ORDE_WARID"];
 				$recSet[$occ]["VSL_ORST_LOCID"] = $dtaObj["VSL_ORDE_LOCID"];
+
+	  			if ($recSet[$occ]["VSL_ORST_ORDQT"] == 0)
+	  			{
+	  				$this->errorCode += 200;
+	  				$this->errorCodeText[count($this->errorCodeText)] = "Cannot create zero order quantity";
+	  			}
 
 				$dbCount = count($wTbls);
 				$wTbls[$dbCount] = new dbMaster("vsl_orst",$this->tblInfo->schema);
@@ -2099,6 +2162,22 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 	{
 	
 		$wTbls = $sTbls;	
+		$dbCount = count($wTbls);
+		
+		// Last price paid
+		$tmpObj = $dtaObj;
+		$tmpObj["VIN_CUST_BPART"] = $this->local_POST ["VSL_ORHE_BTCUS"];	
+		$tmpObj["VIN_CUST_ITMID"] = $tmpObj["VSL_ORDE_ITMID"];	
+		if ($this->setNewDocument > "JJ_INVO")
+		{ 	
+			$tmpObj["VIN_CUST_LPPAID"] = $tmpObj["VSL_ORDE_OUNET"];	
+			$tmpObj["VIN_CUST_LPDATE"] = $this->getDateFormed();
+		}
+		$wT = new vin_cust($this->tblInfo->schema);
+		$wT->brTrConn = $this->masterTranConn;
+		$wT->vin_cust_lastPrice($tmpObj);
+		$wTbls[$dbCount]->vin_cust = $wT;
+		
 		
 		$recSet = $dtaObj["RECSET"];
 		
@@ -2155,6 +2234,12 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 					
 					if ($this->objAreEqual($recSet[$occ],"vsl_orst","idVSL_ORST") != true)
 			  		{
+			  			if ($recSet[$occ]["VSL_ORST_ORDQT"] == 0)
+			  			{
+			  				$this->errorCode += 200;
+			  				$this->errorCodeText[count($this->errorCodeText)] = "Cannot update zero order quantity";
+			  			}
+			  			
 			  			if ($this->IV_STEP_VALID($recSet[$occ]) == true && $recSet[$occ]["VSL_ORST_STEPS"] < "JJ_X" )
 			  			{	
 			  				
@@ -2188,6 +2273,12 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 				{
 					if ($recSet[$occ]["idVSL_ORST"] < 0 )
 					{					
+			  			if ($recSet[$occ]["VSL_ORST_ORDQT"] == 0)
+			  			{
+			  				$this->errorCode += 200;
+			  				$this->errorCodeText[count($this->errorCodeText)] = "Cannot create zero order quantity";
+			  			}
+
 						$recSet[$occ]["idVSL_ORST"] = "";
 						$recSet[$occ]["VSL_ORST_ORNUM"] = $dtaObj["VSL_ORDE_ORNUM"];
 						$recSet[$occ]["VSL_ORST_ORLIN"] = $dtaObj["idVSL_ORDE"];
@@ -3289,6 +3380,23 @@ $this->VSL_ORHE_ODATE .= $dtaObj["VSL_ORHE_ODATE"];
 						{
 							$dtaSet["EXPBORNED"] = ($recSet[$wocc]["VSL_ORDE_OUNET"] * $recSet[$wocc]["VSL_ORST_ORDQT"] ); //C
 						}
+
+						if ($recSet[$wocc]["VSL_ORDE_OLTYP"] != "BOR")
+						{
+							// Last price paid
+							$tmpObj = array();
+							$tmpObj["PROCESS"] = $ePost["PROCESS"];
+							$tmpObj["SESSION"] = $ePost["SESSION"];
+							$tmpObj["VIN_CUST_BPART"] = $recSet[$wocc]["VSL_ORHE_BTCUS"];	
+							$tmpObj["VIN_CUST_ITMID"] = $recSet[$wocc]["VSL_ORDE_ITMID"];	
+							$tmpObj["VIN_CUST_LPPAID"] = $recSet[$wocc]["VSL_ORDE_OUNET"];	
+							$tmpObj["VIN_CUST_LPDATE"] = $this->getDateFormed();
+							$wT = new vin_cust($this->tblInfo->schema);
+							$wT->brTrConn = $this->masterTranConn;
+							$wT->vin_cust_lastPrice($tmpObj);
+							$this->lastPricePaid = $wT;
+						}
+
 						
 						
 					}
@@ -3725,6 +3833,7 @@ class vsl_delivered extends dbMaster
 		$invObj["SESSION"] = $dtaObj["SESSION"];
 		$invObj["MAXREC_OUT"] = 0;
 		$invObj["idVSL_ORSI"] = "0"; 
+		
 		// Addition filter
 		$invObj["vsl_invDoc"] = array();
 		

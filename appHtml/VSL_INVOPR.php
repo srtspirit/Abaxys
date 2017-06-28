@@ -271,7 +271,8 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 								
 								<input class="hidden" id="VGB_CUSTsearch" ng-click="initCustomer();" />
 								<a class="ab-pointer" 
-								ng-click="ABsessionLink('#/VGB_PARTNERS/VGB_PARTNERS/Process:VGB_PARTNERS,Session:VGB_PARTNERS,tblName:vgb_cust,SourceProcess:VSL_INVOPR','#VGB_CUSTsearch');" >
+								ng-click="ABsearchTbl='vgb_cust';ABsessionLink('','#VGB_CUSTsearch','vgb_cust');"
+								neg-click="ABsessionLink('#/VGB_PARTNERS/VGB_PARTNERS/Process:VGB_PARTNERS,Session:VGB_PARTNERS,tblName:vgb_cust,SourceProcess:VSL_INVOPR','#VGB_CUSTsearch');" >
 									<span title="Access Partner List " ab-label="VGB_CUST_BPART" ></span>
 									<span title="Access Partner List " class="glyphicon glyphicon-search" ></span>
 								</a>

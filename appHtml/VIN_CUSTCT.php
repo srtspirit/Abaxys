@@ -169,6 +169,8 @@ EOC;
 			<span class="ab-pointer" vin_item="" >
 				<span class="glyphicon glyphicon-search text-primary" ></span>
 			</span>
+		</span>
+		
 
 	</td>
 	<td>		
@@ -390,7 +392,8 @@ EOC;
 	<input class="hidden" id="VGB_SUPPsearch" ng-click="initNewSupp();" />
 	
 	<span class="btn-link ab-pointer text-primary ab-strong" vgb_supp=""
-	ng-click="ABsessionLink('#/VGB_PARTNERS/VGB_PARTNERS/Process:VGB_PARTNERS,Session:VGB_PARTNERS,tblName:vgb_supp,SourceProcess:VIN_ITEMS','#VGB_SUPPsearch','vgb_supp');" 
+	ng-click="ABsearchTbl='vgb_supp';ABsessionLink('','#VGB_SUPPsearch','vgb_supp');" 
+	neg-click="ABsessionLink('#/VGB_PARTNERS/VGB_PARTNERS/Process:VGB_PARTNERS,Session:VGB_PARTNERS,tblName:vgb_supp,SourceProcess:VIN_ITEMS','#VGB_SUPPsearch','vgb_supp');" 
 	>
 		<span ab-label="VGB_PARTNERS_vgb_supp" ></span>
 		<span class="glyphicon glyphicon-search" ></span>

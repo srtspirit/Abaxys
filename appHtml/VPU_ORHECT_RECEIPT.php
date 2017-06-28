@@ -852,7 +852,7 @@ $stepCode .= <<<EOC
       <a class="dr1opdown-toggle " data-toggle="dro1pdown" style="white-space:nowrap;padding:0px;">
 	<span class="ca2ret"></span>
 	<span  ng-repeat="step in VPU_STEP_LIST" ng-if="step.name==y.VPU_ORST_STEPS" >
-		&nbsp;{{step.labeltext}}&nbsp;
+		&nbsp;{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}&nbsp;
 	</span>
       	
       </a>
@@ -1730,7 +1730,7 @@ echo $stepCode;
 					&nbsp;{{ invQ.VPU_ORST_ORDQT  }}&nbsp;
 
 					<span ng-repeat="stp in VPU_STEP_LIST" ng-if="stp.name == invQ.VPU_ORST_STEPS">
- 					{{stp.labeltext}} 
+ 					{{ AB_CPARM.VPU_STEPS_DESCR[stp.name] }} 
  					</span>
 				</div>
 				<div class="col-sm-4 " recount="1" >

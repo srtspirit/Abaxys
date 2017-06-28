@@ -9,6 +9,12 @@ $tFnc = new AB_querySession;
 $isAdmin = $tFnc->isUserAdmin();
 $currUsr = $tFnc->getUserData();
 
+$prObj = array();
+$prObj["PROCESS"] = "VSL_ORDERS";
+$prObj["SESSION"] = "VSL_INVOCT";
+
+$hasPriv = $tFnc->hasPriviledge($prObj,"vsl_orhe","upd");
+
 ?>
 
 <style>
@@ -375,10 +381,27 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 								<table>
 								<tr>
 								<td>
+								<?php 
+									if ($hasPriv>0)
+									{
+								?>		
 									<span class="ab-border text-primary ab-spaceless" ng-click="setSelected(varRow.VSL_ORST_DELID);">
 										<span class="glyphicon glyphicon-ok {{isSelected(varRow.VSL_ORST_DELID)!=1?'invisible':''}}">
 										</span>
 									</span>
+								<?php
+									}
+									else
+									{
+								?>		
+									<span class="ab-border text-primary ab-spaceless" >
+										<span class="glyphicon glyphicon-ok {{isSelected(varRow.VSL_ORST_DELID)!=1?'invisible':''}}">
+										</span>
+									</span>
+								<?php	
+
+									}
+								?>		
 									&nbsp;
 								</td>
 								<td>							

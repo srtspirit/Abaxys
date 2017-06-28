@@ -338,6 +338,14 @@ Description
 		<input class="hidden" ab-mpp="limit" value="0" />			
 		<input class="hidden" ng-click="idVIN_ITEM=VPU_ORDE_ITMID;ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_inveQuery','vin_inveQuery','vin_inve');" />
 	</div>
+	<div class="col-sm-2 text-primary ab-strong">
+		&nbsp;&nbsp;
+		<span class="ab-borderless ab-spaceless ab-pointer" ng-click="showZero=1-showZero" ng-init="showZero=0">
+			<span class="glyphicon glyphicon-th-list"></span>
+			<span ab-label="STD_SHOW_ZERO" class="{{showZero==0?'':'hidden'}}">Show</span>
+			<span ab-label="STD_HIDE_ZERO" class="{{showZero>0?'':'hidden'}}">Hide</span>
+		</span>
+	</div>
 
 </div>
 <div class="col-sm-12 {{ varFormPg<0?'hidden':'' }}" >   
@@ -487,34 +495,55 @@ $inAttr['size'] = "8";
 $hardCode =<<<EOC
 
 
-				<table style="width:100%">
+				<table style="width:100%"  >
 					<tr>
-						<td class="text-left">
+						<td class="text-left" onmouseover="$(this).css('color','red');">
 							<input class="hidden" ng-model="VAP_OIHE_BNKID" />
 							<input class="hidden" ng-model="VGL_BANK_PMTTY" />
 							<input class="hidden" ng-model="VGL_BANK_TYDET" />
 							
-							<ul class="nav  ab-spaceless " role="tablist"    >
+<div class="dropdown" ng-init="VAP_OIHE_BNKID=(VAP_OIHE_BNKID==''?rawResult.vgl_bank_info[0].idVGL_BANK:VAP_OIHE_BNKID)" >
+
+	  <button class="btn btn-default ab-spaceless dropdown-toggle" type="button" data-toggle="dropdown" >
+		  <span ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'VGL_BANK_PMTTY' " ng-if="VAP_OIHE_BNKID==bnk.idVGL_BANK">
+		 	<span  >{{ bnk.VGL_BANK_PMTDE }}</span>
+		  </span>
+		  <span class="caret"></span>
+	  </button>
+
+	  <ul class="dropdown-menu">
+		<li class="" ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'VGL_BANK_PMTTY' "  >
+			<a class="small"  ng-click="setBankInfo(bnk);" data-toggle="tooltip" title="ToolTIPS" data-placement="top">
+				<span  >{{ bnk.VGL_BANK_PMTDE }}</span>
+			</a>
+		</li>
+	  </ul>
+
+</div>
+
+<!--							<ul onmouseover="$(this).css('color','red');" class="nav  ab-spaceless " role="tablist"    >
 							<li class="dropdown ab-spaceless"  >
 								
 								<span data-toggle="dropdown" class="ab-pointer" style="white-space:nowrap;padding:0px;" >
 									<span ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'idVGL_BANK' " 
-									ng-if="VAP_OIHE_BNKID==bnk.idVGL_BANK" >{{ bnk.VGL_BANK_PMTDE }}</span>
+									ng-if="VAP_OIHE_BNKID==bnk.idVGL_BANK" >AA{{ bnk.VGL_BANK_PMTDE }}
+									</span>
 									<span class="text-primary">
-										&nbsp;&nbsp;
+										&nbsp;&nbsp;{{ rawResult.vgl_bank_info.length }}--{{VAP_OIHE_BNKID}}
 										<span class="caret" ></span>
 									</span>
 									
 								</span>
-								<ul class="dropdown-menu ab-spaceless" ab-flst="" role="menu"  >
+								<ul class=" dropdown-menu ab-spaceless" ab-flst="" role="menu"  >
 									<li class="" ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'VGL_BANK_PMTTY' "  >
 									<a class="small"  ng-click="setBankInfo(bnk);" >
-									<span  >{{ bnk.VGL_BANK_PMTDE }}</span>
+									<span  >aa{{ bnk.VGL_BANK_PMTDE }}</span>
 									</a>
 									</li>
 								</ul>
 							</li>
 							</ul>
+-->
 						</td>
 					</tr>
 					<tr>
@@ -598,10 +627,12 @@ echo $xtmp->currHtml;
 		<td style="width:10%;" class="text-right" >Amount&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		<td style="width:10%;" class="text-right" >Balance&nbsp;&nbsp;</td>
 		<td style="width:32%;" >&nbsp;&nbsp;Reference&nbsp;&nbsp;
+<!--
 		<span class="well small ab-borderless ab-spaceless ab-pointer" ng-click="showZero=1-showZero" ng-init="showZero=0">
 			<span ab-label="STD_SHOW_ZERO" class="{{showZero==0?'':'hidden'}}">Show</span>
 			<span ab-label="STD_HIDE_ZERO" class="{{showZero>0?'':'hidden'}}">Hide</span>
 		</span>
+-->
 		</td>
 	</tr>
 	
@@ -729,6 +760,7 @@ echo $xtmp->currHtml;
 			</td>
 			<td class="small ab-strong text-center" >
 				<span class="ab-pointer text-primary" pt="#jrnpost-{{OIT.idVGL_JNHE}}" onclick="$($(this).attr('pt')).toggleClass('hidden');" >
+				<span class="glyphicon glyphicon-th-list"></span>
 				<span class="{{OIT.VAP_OIHE_INVOI>0?'':'hidden'}}">{{OIT.VAP_OIHE_INVOI}}-</span>
 				{{OIT.VGL_JNHE_TRNID}}
 				</span>
@@ -743,10 +775,11 @@ echo $xtmp->currHtml;
 					<span ng-if="OIT.VAP_OIHE_TRTYP=='STD'">
 					{{OIT.VAP_OIHE_OITTY}}
 					</span>
-					<span ng-if="OIT.VAP_OIHE_TRTYP!='STD'" class="text-primary ab-pointer ab-strong small" pt="#vpu-{{OIT.idVGL_JNHE}}" 
+					<span ng-if="OIT.VAP_OIHE_TRTYP!='STD' || OIT.VAP_OIHE_BOOKID!=0" class="text-primary ab-pointer ab-strong small" pt="#vpu-{{OIT.idVGL_JNHE}}" 
 					clickid="{{OIT.idVGL_JNHE}}" 
 					onclick="accumclick($(this).attr('clickid'));$($(this).attr('pt')).toggleClass('hidden');" >
-					{{OIT.VAP_OIHE_OITTY}}-{{OIT.VAP_OIHE_TRTYP}}
+						<span class="glyphicon glyphicon-th-list"></span>
+						{{OIT.VAP_OIHE_OITTY}}-{{OIT.VAP_OIHE_TRTYP}}
 					</span>
 					
 					<input ng-model="OIT.VAP_OIHE_OITTY" class="hidden" />
@@ -755,7 +788,8 @@ echo $xtmp->currHtml;
 					<span data-toggle="dropdown" class="text-primary  small" style="white-space:nowrap;padding:0px;" >
 						
 						<span  ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'idVGL_BANK' " 
-						ng-if="OIT.VAP_OIHE_OITTY=='PMT'&&OIT.VAP_OIHE_BNKID==bnk.idVGL_BANK" >{{ bnk.VGL_BANK_PMTDE }}&nbsp;
+						ng-if="OIT.VAP_OIHE_OITTY=='PMT' && OIT.VAP_OIHE_BNKID==bnk.idVGL_BANK" >
+						{{ bnk.VGL_BANK_PMTDE }}&nbsp;#{{OIT.VAP_OIHE_CHKID}}
 						
 						</span>
 					
@@ -770,9 +804,9 @@ echo $xtmp->currHtml;
 			<td class="text-right" >
 			<input ng-model="OIT.VAP_OIHE_AMUNT" class="hidden" />
 			{{OIT.VAP_OIHE_AMUNT}}
-			<span class="{{OIT.VAP_OIHE_AMUNT!=OIT.VAP_OIHE_BALAN?'text-primary ab-pointer':''}}" tid="{{OIT.idVAP_OIHE}}" 
+			<span class="{{OIT.VAP_OIHE_TRTYP=='STD' && OIT.VAP_OIHE_AMUNT!=OIT.VAP_OIHE_BALAN?'text-primary ab-pointer':''}}" tid="{{OIT.idVAP_OIHE}}" 
 			onclick="$('#adj-'+$(this).attr('tid')).toggleClass('hidden');"  >&nbsp;&nbsp;
-			<span class="caret {{OIT.VAP_OIHE_AMUNT!=OIT.VAP_OIHE_BALAN?'':'invisible'}}"> </span></span>
+			<span class="caret {{OIT.VAP_OIHE_TRTYP=='STD' && OIT.VAP_OIHE_AMUNT!=OIT.VAP_OIHE_BALAN?'':'invisible'}}"> </span></span>
 			</td>
 			<td class="text-right ab-strong" >
 			<input ng-model="OIT.VAP_OIHE_BALAN" class="hidden" />
@@ -832,6 +866,11 @@ echo $xtmp->currHtml;
 						
 					</tr>
 					<tr class="ab-border">
+						<td colspan=100>					
+<?php require_once "VAP_OITEMCT_RPO_ITM.php"; ?>		
+						</td>
+					</tr>				
+					<tr class="ab-border">
 						<td colspan=100></td>
 					</tr>
 					</table>
@@ -850,25 +889,39 @@ echo $xtmp->currHtml;
 					<table style="width:100%;">
 					<tr class="ab-strong" ng-repeat="vpu in rawResult.vpu_purch | AB_noDoubles:'idVPU_ORSI' " ng-if="vpu.VPU_ORSI_GRPID == OIT.VAP_OIHE_INVOI" >
 						<td style="width:40%;">
-						Item&nbsp;&nbsp;<span class="text-primary small ab-pointer" ng-click="insertItem(rawResult.vpu_purch,vpu.VPU_ORSI_GRPID,vpu.idVPU_ORSI)" >New Item</span>
+						Item&nbsp;&nbsp;
+						<span class="text-primary small ab-pointer" 
+							ng-if="vpu.VAP_OIHE_TRTYP=='RPO' " 
+							ng-click="insertItem(rawResult.vpu_purch,vpu.VPU_ORSI_GRPID,vpu.idVPU_ORSI)" >
+							New Item
+						</span>
+						<span class="text-primary small ab-underline" ng-if="vpu.VAP_OIHE_TRTYP!='RPO' "> 
+							Booked to:&nbsp;
+							<span ng-repeat="BOOK in vap_open_items| AB_noDoubles:'idVAP_OIHE' " ng-if="BOOK.idVAP_OIHE==OIT.VAP_OIHE_BOOKID" >
+								<span class="{{BOOK.VAP_OIHE_INVOI>0?'':'hidden'}}">{{BOOK.VAP_OIHE_INVOI}}-</span>
+								{{BOOK.VGL_JNHE_TRNID}}
+							</span>
+						</span>
+						
 						<input class="hidden" ng-model="vpu.grandtotal" ng-click="vpu.grandtotal=accGrandTotal(OIT.idVGL_JNHE)"  size=5 />
 						<input class="hidden" ng-model="vpu.taxtotal"  size=5 /> 
 						<input class="hidden" ng-model="vpu.invtotal"  size=5 />
-						
+						<input class="hidden" ng-model="vpu.idVTX_SCHH" />
 						</td>
 						<td style="width:10%;" class="text-right"> Quantity </td>
 						<td style="width:10%;" class="text-right"> Price&nbsp;</td>
 						<td style="width:10%;" class="text-right"> Extension&nbsp;</td>
-						<td style="width:10%;" class="text-right"> New Qty </td>
-						<td style="width:10%;" class="text-right"> New Price&nbsp;</td>
-						<td style="width:10%;" class="text-right"> Extension&nbsp;</td>
+						<td style="width:10%;" class="text-right"><span class=" {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}"> New Qty </span></td>
+						<td style="width:10%;" class="text-right"><span class=" {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}"> New Price&nbsp;</span></td>
+						<td style="width:10%;" class="text-right"><span class=" {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}"> Extension&nbsp;</span></td>
 						
 						
 					</tr>
 					<tr ng-repeat="vpu in rawResult.vpu_purch | AB_noDoubles:'idVPU_ORSI,idVGB_ADDR' " ng-if="vpu.VPU_ORSI_GRPID == OIT.VAP_OIHE_INVOI && vpu.idVGB_ADDR == vpu.VPU_ORHE_STADD" >
-					<td><input class="hidden" ng-model="vpu.idVTX_SCHH" /></td>
+					<td></td>
 					</tr>
-					<tr ng-repeat="vpu in rawResult.vpu_purch | AB_noDoubles:'idVPU_ORST' " ng-if="vpu.VPU_ORSI_GRPID == OIT.VAP_OIHE_INVOI" >
+					<tr ng-repeat="vpu in rawResult.vpu_purch | AB_noDoubles:'idVPU_ORST' " 
+					ng-if="vpu.VPU_ORSI_GRPID == OIT.VAP_OIHE_INVOI" >
 						
 						<td>
 							<span ng-if="vpu.newItem=='1' " > 
@@ -882,7 +935,8 @@ echo $xtmp->currHtml;
 								
 								<input class="hidden" ng-model="VIN_ITEM_ITMID" />
 
-							</span>	
+							</span>
+								
 							<span class="ab-strong" ng-if="vpu.newItem!='1' ">
 							{{vpu.VIN_ITEM_ITMID}}
 							</span>
@@ -890,9 +944,13 @@ echo $xtmp->currHtml;
 							<input class="hidden" ng-model="vpu.VIN_ITEM_INVIT" />
 							<input class="hidden" ng-model="vpu.newItem" />
 							
-							<span class="small">
-							-{{vpu.VPU_ORDE_DESCR}}
+							<span class="small" ng-if="vpu.newItem!='1' ">
+							-<input size=30 readonly class="ab-borderless" ng-model="vpu.VPU_ORDE_DESCR" />
 							</span>
+							<span class="small" ng-if="vpu.newItem=='1' ">
+							-<input size=30 ng-model="vpu.VPU_ORDE_DESCR" />
+							</span>
+
 							<input class="hidden" ng-model="vpu.VIN_ITEM_ITTXT" />
 							<input class="hidden" ng-model="vpu.VPU_ORDE_OLTYP" />
 							<span class="small text-primary ab-strong" ng-if="vpu.VIN_ITEM_ITTXT=='NOTAX'"><span class="small">no tax</span></span>
@@ -912,8 +970,9 @@ echo $xtmp->currHtml;
 						<td class="text-right">
 						
 							{{ABGetNumberFn("fmt-curr",( (vpu.VPU_ORDE_OUNET*1) * (vpu.VPU_ORST_ORDQT*1) / (vpu.VPU_ORDE_FACTO*1) )) }}&nbsp;
+							
 						</td>
-						<td class="text-right">
+						<td class="text-right {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}">
 						
 							<span ng-if="vpu.VPU_ORDE_OLTYP!='BOR'">
 								<input size=5 class="text-right" ng-model="vpu.VPU_ORST_ORDQT_REV" clickid="{{OIT.idVGL_JNHE}}" 
@@ -923,7 +982,7 @@ echo $xtmp->currHtml;
 								ng-init="vpu.VPU_ORST_ORDQT_ORG=vpu.VPU_ORST_ORDQT" />
 							</span>
 						</td>
-						<td class="text-right">
+						<td class="text-right {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}">
 
 							<span ng-if="vpu.VPU_ORDE_OLTYP!='BOR'">
 								<input size=5 class="text-right" ng-model="vpu.VPU_ORDE_OUNET_REV" clickid="{{OIT.idVGL_JNHE}}" 
@@ -934,15 +993,25 @@ echo $xtmp->currHtml;
 							</span>
 
 						</td>
-						<td class="text-right">
+						<td class="text-right {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}">
 							<span ng-if="vpu.VPU_ORDE_OLTYP!='BOR'">
+							
 								<input class="hidden"  ng-model="vpu.ext" taxing="{{vpu.VIN_ITEM_ITTXT}}" ng-bind="vpu.ext=((vpu.VPU_ORDE_OUNET_REV*1) * (vpu.VPU_ORST_ORDQT_REV*1) / (vpu.VPU_ORDE_FACTO*1)).toFixed(2)" size=5 />
 								<input class="hidden"  ng-model="vpu.ext_ORG" ng-bind="vpu.ext_ORG=((vpu.VPU_ORDE_OUNET_ORG*1) * (vpu.VPU_ORST_ORDQT_ORG*1) / (vpu.VPU_ORDE_FACTO*1)).toFixed(2)" size=5 />
 								{{ABGetNumberFn("fmt-curr",( (vpu.VPU_ORDE_OUNET_REV*1) * (vpu.VPU_ORST_ORDQT_REV*1) / (vpu.VPU_ORDE_FACTO*1) )) }}&nbsp;
+<!-- AC 20170523 trying to get SQL to compute extension
+								<input class="hidden"  ng-model="vpu.ext" taxing="{{vpu.VIN_ITEM_ITTXT}}" ng-bind="vpu.ext=((vpu.VPU_ORDE_OUNET_REV*1) * (vpu.VPU_ORST_ORDQT_REV*1) / (vpu.VPU_ORDE_FACTO*1)).toFixed(2)" size=5 />
+								<input class="hidden"  ng-model="vpu.ext_ORG" ng-bind="vpu.ext_ORG=((vpu.VPU_ORDE_OUNET_ORG*1) * (vpu.VPU_ORST_ORDQT_ORG*1) / (vpu.VPU_ORDE_FACTO*1)).toFixed(2)" size=5 />
+								{{ABGetNumberFn("fmt-curr",( (vpu.VPU_ORDE_OUNET_REV*1) * (vpu.VPU_ORST_ORDQT_REV*1) / (vpu.VPU_ORDE_FACTO*1) )) }}&nbsp;
+-->
+
 							</span>	
 						</td>
 						
 					</tr>
+
+
+
 					<tr class="ab-border">
 					</tr>
 					
@@ -981,7 +1050,7 @@ echo $xtmp->currHtml;
 								<td class="text-right">
 									
 								</td>
-								<td class="text-right">
+								<td class="text-right {{vpu.VAP_OIHE_TRTYP=='RPO'?'':'hidden'}}">
 									<input size=5 class="ab-borderless text-right" readonly  
 									taxseq="{{vpu.VTX_SCHE_SCHSQ}}"
 									taxper="{{vpu.VTX_SCHE_TAXPE}}"
@@ -996,7 +1065,7 @@ echo $xtmp->currHtml;
 						</td>
 						
 					</tr>
-					<tr>
+					<tr ng-if="vpu.VAP_OIHE_TRTYP=='RPO' ">
 						<td class="text-right">
 						</td>
 						<td class="text-right">
@@ -1014,6 +1083,19 @@ echo $xtmp->currHtml;
 							<input class="text-primary text-right ab-borderless ab-strong" readonly ng-model="vpu.invtotal"  size=5 />&nbsp;	
 						</td>
 					</tr>										
+					<tr ng-if="vpu.VAP_OIHE_TRTYP!='RPO' ">
+						<td class="text-right">
+						</td>
+						<td class="text-right">
+						</td>
+						<td class="text-right text-primary ab-strong">
+							Total:
+						</td>	
+						<td class="text-right">
+							<input class="text-primary text-right ab-borderless ab-strong" readonly ng-model="vpu.invtotal"  size=5 />&nbsp;	
+						</td>
+					</tr>										
+
 					<tr class="ab-border">
 						<td colspan=100></td>
 					</tr>
@@ -1033,8 +1115,9 @@ echo $xtmp->currHtml;
 				<td></td>
 				<td></td>
 				<td></td>
-				<td colspan=5 style="vertical-align:top;">
+				<td colspan=5 style="vertical-align:top;" class="ab-strong">
 					<table style="width:100%">
+<!--
 					<tr ng-repeat="OITDET in rawResult.vap_open_items| AB_noDoubles:'idVAP_OIDE' " ng-if="OIT.idVAP_OIHE == OITDET.VAP_OIDE_OITID" >
 						<td style="width:15%;vertical-align:top;">{{ OITDET.VAP_OIDE_TRNDA}}</td>
 						<td style="width:10%;vertical-align:top;">{{ OITDET.VAP_OIDE_TRNID}}</td>
@@ -1052,7 +1135,34 @@ echo $xtmp->currHtml;
 						<td style="width:10%"></td>
 						
 					<tr>
-					</table>	
+-->
+					<tr ng-repeat="OITDET in rawResult.vap_open_items| AB_noDoubles:'idVAP_OIDE' " ng-if="OIT.idVAP_OIHE == OITDET.VAP_OIDE_OITID" >
+						<td style="width:90%;vertical-align:top;">
+							<table style="width:100%">
+							<tr ng-repeat="OITDDD in rawResult.vap_open_items| AB_noDoubles:'idVAP_OIDE' " ng-if="OITDET.VAP_OIDE_TRNID == OITDDD.VAP_OIDE_TRNID && OITDET.idVAP_OIDE != OITDDD.idVAP_OIDE ">
+								<td style="width:32%;" class="text-left">&nbsp;{{OITDDD.VAP_OIHE_DOCDA}}&nbsp;{{OITDDD.VAP_OIHE_OITTY}}</td>
+								<td style="width:32%;" class="text-left">
+									<span class="{{OITDDD.VAP_OIHE_INVOI>0?'':'hidden'}}">{{OITDDD.VAP_OIHE_INVOI}}-</span>
+									{{OITDDD.VGL_JNHE_TRNID}}
+									</span>
+									<span  ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'idVGL_BANK' " 
+									ng-if="OITDDD.VAP_OIHE_OITTY=='PMT' && OITDDD.VAP_OIHE_BNKID==bnk.idVGL_BANK" >
+									{{ bnk.VGL_BANK_PMTDE }}&nbsp;#{{OITDDD.VAP_OIHE_CHKID}}
+									
+									</span>
+									
+								</td>
+								<td style="width:22%;" class="text-right">{{OITDDD.VAP_OIDE_AMUNT}}</td>
+								<td style="width:14%;" ></td>
+							</tr>
+							</table>
+						</td>
+						<td style="width:10%"></td>
+						
+					<tr>
+
+					</table>
+				</td>	
 			</tr>
 			<table>
 			</form>
@@ -1076,4 +1186,4 @@ echo $xtmp->currHtml;
    </div>
    
 </div> 
-</div> 
+</div>

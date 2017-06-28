@@ -69,6 +69,10 @@ $sparm["searchResult"] = "ABsearchvgb_cust";
 $sparm["searchFilter"] = "hid2den";
 $sparm["filterExclude"] = "VGB_BPAR_BPNAM,VGB_BPAR_CDATE";
 $sparm["filterAuto"] = "VGB_BPAR_BPART";
+$sparm["rootGroup"] = "VGB_CUST_MRKID:vgb_mark:idVGB_MARK:VGB_MARK_DESCR";
+$sparm["rootGroup"] .= ",VGB_CUST_CUTYP:vgb_ctyp:idVGB_CTYP:VGB_CTYP_DESCR";
+$sparm["rootGroup"] .= ",VGB_CUST_SLSRP:vgb_slrp:idVGB_SLRP:VGB_SLRP_SRNAM";
+
 $hardCode = $xtmp->setSearchMaster($sparm);
 
 
@@ -93,7 +97,17 @@ $hardCode = $xtmp->setSearchMaster($sparm);
 	<div class="ab-wrapper-div">
 		<table class="text-primary ab-strong" style="width:100%;" >
 			<tr class="">
-				<td style="width:10%;" ></td>
+				<td style="width:10%;" >
+				<span class="hidden">
+					<span ab-label="VGB_CUST_MRKID"></span>
+					<span ab-label="VGB_CUST_CUTYP"></span>
+					<span ab-label="VGB_CUST_SLSRP"></span>
+					<span ab-label=""></span>
+					
+					
+				</span>
+				
+				</td>
 				<td style="width:20%;" ><span ab-label="STD_ID_CODE">ID</span></td>
 				<td style="width:20%;" ><span ab-label="STD_NAME">Bname</span></td>
 				<td style="width:50%;" >
@@ -161,6 +175,7 @@ $sparm["searchResult"] = "ABsearchvgb_supp";
 $sparm["searchFilter"] = "hidd5en";
 $sparm["filterExclude"] = "VGB_BPAR_BPNAM,VGB_BPAR_CDATE";
 $sparm["filterAuto"] = "VGB_BPAR_BPART";
+
 $hardCode = $xtmp->setSearchMaster($sparm);
 // echo $hardCode;
 ?>
@@ -241,6 +256,14 @@ $hardCode = $xtmp->setSearchMaster($sparm);
 
 <!-- Item -->
 <div class="{{ABsearchTbl=='ABsearchvin_item'?'':'hidden'}}" >
+<div class="hidden" ab-remark="String Labels">
+<span ab-label="VIN_ITEM_SEAR1"></span>
+<span ab-label="VIN_ITEM_SCUOM"></span>
+<span ab-label="VIN_ITEM_SEAR1"></span>
+<span ab-label="VIN_ITEM_SEAR1"></span>
+<span ab-label="VIN_ITEM_SEAR1"></span>
+
+</div>
 <?php
 $xtmp = new appForm("stdSearchDsp");
 $sparm = array();
@@ -251,6 +274,9 @@ $sparm["searchResult"] = "ABsearchvin_item";
 $sparm["searchFilter"] = "hidd2en";
 $sparm["filterExclude"] = "";
 $sparm["filterAuto"] = "VIN_ITEM_ITMID,VIN_ITEM_LOTCT";
+$sparm["rootGroup"] = "VIN_ITEM_SEAR1:vin_ityp:idVIN_ITYP:VIN_ITYP_DESCR";
+$sparm["rootGroup"] .= ",VIN_ITEM_ITGRP:vin_grou:idVIN_GROU:VIN_GROU_DESCR";
+
 $hardCode = $xtmp->setSearchMaster($sparm);
 // echo $hardCode;
 ?>
@@ -896,7 +922,7 @@ $chartCode = $xtmp->setSearchMaster($sparm);
 				
 				<div class="col-lg-1" ><span ab-label="VGL_BRCH_GLBID">Branch</span></div>
 				<div class="col-lg-2" ><span ab-label="STD_SOURCE">STD_SOURCE</span></div>
-				<div class="col-lg-5" style="vertical-align:top;" >
+				<div class="col-lg-7" style="vertical-align:top;" >
 
 					<div class="row">
 						<div class="col-lg-3" ><span ab-label="STD_ID_CODE">Code</span></div>
@@ -919,7 +945,7 @@ $chartCode = $xtmp->setSearchMaster($sparm);
 						{{ rep.VTX_SCHH_SCHID}}  - {{rep.VTX_SCHE_SCHDE}}
 					</span>
 				</div>
-				<div class="col-lg-5" style="vertical-align:top;" >
+				<div class="col-lg-7" style="vertical-align:top;" >
 				
 				
 					<div class="row  ab-underline ab-spaceless"  ng-repeat="repDet in ABsearchvtx_schh | AB_noDoubles:'idVTX_SCHE'  | AB_Sorted:'VTX_SCHE_AB_DILEVEL' " 
@@ -1127,6 +1153,36 @@ $chartCode = $xtmp->setSearchMaster($sparm);
 
 
 
+
+$chartDsp =<<<EOC
+
+<div class="ab-wrapper-divsm" >
+<table style="width:100%;" >
+<tr class="ab-hover {{ glDta.idVGL_CHART==repDet.VGL_PACC_GLIDN?'ab-strong text-primary ab-underline':'' }}" ng-click="repDet.VGL_PACC_GLIDN_new=glDta.idVGL_CHART;repDet.VGL_CHART_GLIDN_new=glDta.VGL_CHART_GLIDN;repDet.VGL_CHART_GLDES_new=glDta.VGL_CHART_GLDES;"  ng-repeat="glDta in ABsearchvgl_chart | AB_Sorted:'VGL_CHART_GLIDN' " >
+<td class="" >{{glDta.VGL_CHART_GLIDN}}</td>
+<td>{{glDta.VGL_CHART_GLDES}}</td>
+<td class="{{ glDta.idVGL_CHART==repDet.VGL_PACC_GLIDN?'small text-right':'hidden' }}" >
+<span class="ab-border" ab-label="STD_ORIGINAL" > Org.</span> </td>
+</tr>
+</table>
+</div>
+
+EOC;
+
+$xtmp = new appForm("stdSearchDsp");
+$sparm = array();
+$sparm["searchLabel"] = "hidden";
+$sparm["searchTable"] = "vgl_chart";
+ 
+$sparm["searchJoin"] = "";
+$sparm["searchResult"] = "ABsearchvgl_chart";
+$sparm["searchFilter"] = "hidden";
+$sparm["filterExclude"] = "";
+$sparm["filterAuto"] = "VGL_CHART_GLIDN";
+$sparm["dspViewer"] = $chartDsp;
+$chartCode = $xtmp->setSearchMaster($sparm);
+
+
 ?>
 
 
@@ -1148,7 +1204,7 @@ $chartCode = $xtmp->setSearchMaster($sparm);
 				
 				<div class="col-lg-1" ><span ab-label="VGL_BRCH_GLBID">Branch</span></div>
 				<div class="col-lg-2" ><span ab-label="STD_SOURCE">STD_SOURCE</span></div>
-				<div class="col-lg-5" style="vertical-align:top;" >
+				<div class="col-lg-7" style="vertical-align:top;" >
 
 					<div class="row">
 						<div class="col-lg-3" ><span ab-label="STD_ID_CODE">Code</span></div>
@@ -1177,11 +1233,11 @@ $chartCode = $xtmp->setSearchMaster($sparm);
 					</span>
 				</div>
 				<div class="col-lg-2" >
-					<span ab-label="VGL_SOURCE_{{rep.VGL_PACC_SOURCE}}"
+					<span title="{{ rep.VGL_PACC_SOURCE}}" ab-label="VGL_SOURCE_{{rep.VGL_PACC_SOURCE}}"
 						{{ rep.VGL_PACC_SOURCE}} 
 					</span>
 				</div>
-				<div class="col-lg-5" style="vertical-align:top;" >
+				<div class="col-lg-7" style="vertical-align:top;" >
 				
 				
 					<div class="row  ab-underline ab-spaceless"  ng-repeat="repDet in ABsearchvgl_pacc | AB_noDoubles:'idVGL_PACC'  | AB_Sorted:'VGL_PACC_SCHCO' " 
@@ -1326,9 +1382,18 @@ $scope.ABsearchAlias('vgl_pacc','vgl_chart',$scope.ABsPatternABsearchvgl_pacc,'A
 	</div>
 </div>
 
+<div class="row">
+<?php // testing abstract name require_once "../appHtml/stdSearchDspVIN_ITEM_LIST.php"; ?>
+</div>
 
 
+<div class="row">
+<?php require_once "../appHtml/stdSearchDspVGB_CPARM.php"; ?>
+</div>
 
+<div class="row">
+<?php require_once "../appHtml/stdSearchDspVGL_BANK.php"; ?>
+</div>
 
 <div>
 <span class="ab-pointer" onclick="$('#ABtestTrig').toggleClass('hidden');">.</span>

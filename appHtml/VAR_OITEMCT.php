@@ -385,6 +385,14 @@ echo $xtmp->currHtml;
 		<input class="hidden" ab-mpp="limit" value="0" />			
 		<input class="hidden" ng-click="idVIN_ITEM=VPU_ORDE_ITMID;ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_inveQuery','vin_inveQuery','vin_inve');" />
 	</div>
+	<div class="col-sm-4 text-primary ab-strong">
+		&nbsp;&nbsp;
+		<span class="ab-borderless ab-spaceless ab-pointer" ng-click="showZero=1-showZero" ng-init="showZero=0">
+			<span class="glyphicon glyphicon-th-list"></span>
+			<span ab-label="STD_SHOW_ZERO" class="{{showZero==0?'':'hidden'}}">Show</span>
+			<span ab-label="STD_HIDE_ZERO" class="{{showZero>0?'':'hidden'}}">Hide</span>
+		</span>
+	</div>
 
 </div>
 <div class="col-sm-12 {{ varFormPg<0?'hidden':'' }}" >   
@@ -514,6 +522,27 @@ $hardCode =<<<EOC
 							<input class="hidden" ng-model="VAR_OIHE_BNKID" />
 							<input class="hidden" ng-model="VGL_BANK_PMTTY" />
 							<input class="hidden" ng-model="VGL_BANK_TYDET" />
+
+
+<div class="dropdown" ng-init="VAP_OIHE_BNKID=(VAP_OIHE_BNKID==''?rawResult.vgl_bank_info[0].idVGL_BANK:VAP_OIHE_BNKID)" >
+
+	  <button class="btn btn-default ab-spaceless dropdown-toggle" type="button" data-toggle="dropdown" >
+		  <span ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'VGL_BANK_PMTTY' " ng-if="VAR_OIHE_BNKID==bnk.idVGL_BANK">
+		 	<span  >{{ bnk.VGL_BANK_PMTDE }}</span>
+		  </span>
+		  <span class="caret"></span>
+	  </button>
+
+	  <ul class="dropdown-menu">
+		<li class="" ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'VGL_BANK_PMTTY' "  >
+			<a class="small"  ng-click="setBankInfo(bnk);" data-toggle="tooltip" title="ToolTIPS" data-placement="top">
+				<span  >{{ bnk.VGL_BANK_PMTDE }}</span>
+			</a>
+		</li>
+	  </ul>
+
+</div>
+<!--
 							
 							<ul class="nav  ab-spaceless " role="tablist"    >
 							<li class="dropdown ab-spaceless"  >
@@ -536,6 +565,7 @@ $hardCode =<<<EOC
 								</ul>
 							</li>
 							</ul>
+-->							
 						</td>
 					</tr>
 					<tr>
@@ -711,10 +741,12 @@ echo $xtmp->currHtml;
 		<td style="width:10%;" class="text-right" >Amount&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		<td style="width:10%;" class="text-right" >Balance&nbsp;&nbsp;</td>
 		<td style="width:36%;" >&nbsp;&nbsp;Reference&nbsp;&nbsp;
+<!--		
 		<button class="small ab-borderless" ng-click="showZero=1-showZero" ng-init="showZero=0">
 			<span ab-label="STD_SHOW_ZERO" class="{{showZero==0?'':'hidden'}}">Show</span>
 			<span ab-label="STD_HIDE_ZERO" class="{{showZero>0?'':'hidden'}}">Hide</span>
 		</button>
+-->
 		</td>
 	</tr>
 	</table>
@@ -892,8 +924,9 @@ echo $xtmp->currHtml;
 				<td></td>
 				<td></td>
 				<td></td>
-				<td colspan=5 style="vertical-align:top;">
+				<td colspan=5 style="vertical-align:top;" class="ab-strong">
 					<table style="width:100%">
+<!--					
 					<tr ng-repeat="OITDET in rawResult.var_open_items| AB_noDoubles:'idVAR_OIDE' " ng-if="OIT.idVAR_OIHE == OITDET.VAR_OIDE_OITID" >
 						<td style="width:15%;vertical-align:top;">{{ OITDET.VAR_OIDE_TRNDA}}</td>
 						<td style="width:10%;vertical-align:top;">{{ OITDET.VAR_OIDE_TRNID}}</td>
@@ -911,6 +944,31 @@ echo $xtmp->currHtml;
 						<td style="width:10%"></td>
 						
 					<tr>
+-->					
+					<tr ng-repeat="OITDET in rawResult.var_open_items| AB_noDoubles:'idVAR_OIDE' " ng-if="OIT.idVAR_OIHE == OITDET.VAR_OIDE_OITID" >
+						<td style="width:90%;vertical-align:top;">
+							<table style="width:100%">
+							<tr ng-repeat="OITDDD in rawResult.var_open_items| AB_noDoubles:'idVAR_OIDE' " ng-if="OITDET.VAR_OIDE_TRNID == OITDDD.VAR_OIDE_TRNID && OITDET.idVAR_OIDE != OITDDD.idVAR_OIDE ">
+								<td style="width:32%;" class="text-left">&nbsp;{{OITDDD.VAR_OIHE_DOCDA}}&nbsp;{{OITDDD.VAR_OIHE_OITTY}}</td>
+								<td style="width:32%;" class="text-left">
+									<span class="{{OITDDD.VAR_OIHE_INVOI>0?'':'hidden'}}">{{OITDDD.VAR_OIHE_INVOI}}-</span>
+									{{OITDDD.VGL_JNHE_TRNID}}
+									</span>
+									<span  ng-repeat="bnk in rawResult.vgl_bank_info | AB_noDoubles:'idVGL_BANK' " 
+									ng-if="OITDDD.VAR_OIHE_OITTY=='PMT' && OITDDD.VAR_OIHE_BNKID==bnk.idVGL_BANK" >
+									{{ bnk.VGL_BANK_PMTDE }}
+									
+									</span>
+									
+								</td>
+								<td style="width:22%;" class="text-right">{{OITDDD.VAR_OIDE_AMUNT}}</td>
+								<td style="width:14%;" ></td>
+							</tr>
+							</table>
+						</td>
+						<td style="width:10%"></td>
+						
+					<tr>					
 					</table>	
 			</tr>
 			<table>

@@ -32,8 +32,8 @@
 		ceelass="{{x.VSL_ORDE_ORLIN > 0?'':'hidden'}}"
 	 >
 		<form   ab-view="vsl_orde" ab-main="vsl_orde" ab-context="0" ng-init="x.showLots=1" >
-			<input class="hidden" ng-model="x.idVSL_ORDE" />
 			<input class="hidden" ng-model="x.idVSL_ORHE" />
+			<input class="hidden" ng-model="x.idVSL_ORDE" />
 			<input class="hidden" ng-model="x.VSL_ORDE_ORNUM" />
 			<input class="hidden" ng-model="x.VSL_ORDE_FACTO" />
 			<input class="hidden" ng-model="x.VSL_ORDE_WARID" />
@@ -868,7 +868,7 @@ $stepCode .= <<<EOC
 
 <td  style="min-width:100px;"  >
 <div ng-if="y.VIN_ITEM_INVIT == '0'">
-<table ng-repeat="trsp in vgb_cust_svia" ng-if="trsp.VIN_SUPP_BPART == y.VSL_ORDE_SUPID && trsp.VIN_SUPP_ITMID == y.idVIN_ITEM" >
+<table ng-repeat="trsp in vgb_cust_svia | AB_noDoubles:'idVIN_SUPP' " ng-if="trsp.VIN_SUPP_BPART == y.VSL_ORDE_SUPID && trsp.VIN_SUPP_ITMID == y.idVIN_ITEM" >
 <td class="text-primary ab-strong" >Cost&nbsp;$&nbsp;</td>
 <td><input size=6 ng-model="y.VSL_ORDE_OUNET" /></td>
 <td ng-init="setTransporter(trsp);" >&nbsp;&nbsp;{{trsp.VGB_SUPP_BPNAM}}</td>

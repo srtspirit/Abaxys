@@ -163,7 +163,75 @@ $updTrig .= " WHERE " . $dtaObj["tblFieldIdName"] . " = " . $vobj[$dtaObj["tblFi
 		{	
 			// $this->dspTrig = $this->ABgetTrig($dtaObj['TBLNAME'],$this->ABjoins,$this->ABfields,$dtaObj['SPATTERN'],$dtaObj["ORDERBY"]);
 			$this->dspTrig = $this->ABgetTrig($dtaObj,$this->ABjoins,$this->ABfields);
+
+			// AC 20170622 Testing Record Count
+			$this->ABProcessTransactionPdo($this->recordCountTrig);
+			$this->rCount = $this->result;
+
 			
+			$rg = explode(":",$dtaObj["ROOTGROUP"]);
+			
+			$this->rootGroup->result = array();
+			$this->rootGroup->result[0]["DESCRIPTOR"] = "All";
+			$this->rootGroup->result[0]["count"] = $this->rCount[0]["recCount"];
+			$this->rootGroup->result[0]["current"] = true;
+			
+			if ($dtaObj["ROOTGROUP"] && count($rg)>4 && $this->rCount[0]["recCount"] > 20)
+			{
+				$rootGroup = array();
+				
+				$rootGroup["fieldName"] = $rg[0];
+				$rootGroup["tableName"] = $rg[1];
+				$rootGroup["primaryName"] = $rg[2];
+				$rootGroup["descriptor"] = $rg[3];
+				$rootGroup["pageNo"] = $rg[4];
+				
+				
+				$objDta["dataSource"] = $dtaObj['TBLNAME']; 	
+				$objDta["joinSource"] = $this->joinTrig;
+				$objDta["whereClause"] = $this->whereTrig;
+				$objDta["mainColumnName"] = $rootGroup["fieldName"]; // "VGB_CUST_BPNAM";
+				
+				$primaryKey = explode(",",$this->ABprimary);
+				$objDta["idColumnName"] = $primaryKey[0];
+				$objDta["rootGroupName"] = "ABgroupId";
+				$objDta["ABgroupId"] = $rootGroup["fieldName"]; //"VGB_CUST_MRKID";
+				$this->rootGroup = new ABSearchLister($objDta,$schema);
+				if (count($this->rootGroup->result)>0)
+				{
+					$occ = 0;
+					while ($occ < count($this->rootGroup->result))
+					{
+						$this->rootGroup->result[$occ]["index"] = $occ;
+						$this->rootGroup->result[$occ]["current"] = false;
+						$rootObj = array();
+						$rootObj["PROCESS"] = $dtaObj['PROCESS'];
+						$rootObj["SESSION"] = $dtaObj['SESSION'];
+						$rootObj["TBLNAME"] = $rootGroup["tableName"];
+						
+						$rootObj[$rootGroup["primaryName"]] = $this->rootGroup->result[$occ][$rootGroup["fieldName"]];
+						$rootSelect = new dbMaster($rootGroup["tableName"],$schema);
+						$rootSelect->dbFindMatch($rootObj);
+						
+						if (count($rootSelect->result)>0)
+						{
+							$this->rootGroup->result[$occ]["DESCRIPTOR"] = $rootSelect->result[0][$rootGroup["descriptor"]];
+						}
+						
+						if ($occ==$rootGroup["pageNo"])
+						{
+							$this->rootGroup->result[$occ]["current"] = true;
+
+							$this->whereTrig .= " AND " . $rootGroup["fieldName"] . " = '" . $this->rootGroup->result[$occ][$rootGroup["fieldName"]] . "' ";
+							$this->dspTrig = $this->readTrig . $this->joinTrig . $this->whereTrig;
+						}
+						
+						$occ +=1;
+					}
+				}
+			}
+
+
 			// $this->testInjection();
 			$this->ABProcessTrig();
 		}
@@ -172,6 +240,8 @@ $updTrig .= " WHERE " . $dtaObj["tblFieldIdName"] . " = " . $vobj[$dtaObj["tblFi
 		$this->ABsetRangeSelect();
 		$this->ABSetMasterInfo();
 	}
+	
+
 
 	function ABChkOrgDependency($dtaObj)
 	{
@@ -473,23 +543,34 @@ $updTrig .= " WHERE " . $dtaObj["tblFieldIdName"] . " = " . $vobj[$dtaObj["tblFi
 		$fldList = $this->ABselectFields;
 		// $fldList = $this->ABsetField($this->ABselectFields);
 		// $fldList = $this->ABsetField("vin_orhe,vin_orde,vin_lstr,vin_item,vin_wars,vin_itmwar,vin_locs,vin_uset,vin_unit");
+
+$holdTrig = "";
+
+$countF = explode(",",$fldList);
+$countTrig =  <<<EOC
 		
 		
+		SELECT  COUNT(DISTINCT {$countF[0]}) AS recCount {$sqlFunction} FROM {$mainTbl}
 		
-$holdTrig = <<<EOC
+EOC;
+	
+		
+		
+$readTrig = <<<EOC
 		
 		
 		SELECT {$fldList} {$sqlFunction} FROM {$mainTbl}
 		
 EOC;
-		
+
+$joinTrig = "";		
 		
 		if ($tblJoin)
 		{
 			foreach($tblJoin as $name => $value)
 			{
 
-$holdTrig .= <<<EOC
+$joinTrig .= <<<EOC
 		
 		LEFT JOIN {$name} ON {$value}  [=COND:{$name}=]
 		
@@ -548,7 +629,7 @@ EOC;
 		
 $this->whereClause = $wClause;
 
-$holdTrig .= <<<EOC
+$whereTrig = <<<EOC
 		
 		WHERE ( {$wClause} ) [=COND:{$mainTbl}=] {$groupBy} {$orderBy} 	
 		
@@ -569,8 +650,12 @@ EOC;
 			$tFnc->ABignoreOrg = false;
 		}
 		
-		$trig = $tFnc->tblAccessCond($objdta,$holdTrig,true,"onupdate,onupdate.USR");
+		$trig = $tFnc->tblAccessCond($objdta,$readTrig . $joinTrig . $whereTrig,true,"onupdate,onupdate.USR");
 		
+		$this->recordCountTrig = $tFnc->tblAccessCond($objdta,$countTrig . $joinTrig . $whereTrig,true,"onupdate,onupdate.USR");
+		$this->readTrig = $readTrig;
+		$this->joinTrig  = $tFnc->tblAccessCond($objdta,$joinTrig,true,"onupdate,onupdate.USR");
+		$this->whereTrig = $tFnc->tblAccessCond($objdta,$whereTrig,true,"onupdate,onupdate.USR");
 		
 		
 		return $trig;
@@ -814,7 +899,10 @@ $this->ABrange["DATE"] = <<<EOC
 <td colspan="2" style="white-space:nowrap;">
 <label>
 <span class="text-primary " ab-label="[=FIELDNAME=]" >[=FIELDDESCR=]</span>
-<span class="text-primary small" ab-label="STD_RANGE" >Range:</span>
+<select class="text-primary small" ab-label="STD_RANGE" ng-model="ABFT_[=FIELDDESCR=]"  >
+	<option>Range</option>
+	<option>Like</option>
+</select>
 </label>
 </td>	
 <td style="white-space:nowrap;text-align:right;">
@@ -858,6 +946,9 @@ $this->ABrange["DATE"] = <<<EOC
 
 EOC;
 
+$rdmNum = mt_rand();
+$drmDsp = "{{"."ABFT_".$rdmNum."}}";
+
 $this->ABrange["VARCHAR"] = <<<EOC
 <div  id="[=FIELDNAME=]"  ABrange="VARCHAR"  >
 <table class="ab-border well" style="width:100%;">
@@ -866,7 +957,11 @@ $this->ABrange["VARCHAR"] = <<<EOC
 <td colspan="2"  style="white-space:nowrap;">
 <label>
 <span class="text-primary " ab-label="[=FIELDNAME=]" >[=FIELDDESCR=]</span>
-<span class="text-primary small" ab-label="STD_RANGE" >Range:</span>
+<!-- <span class="text-primary small" ab-label="STD_RANGE" >Range:</span> -->
+	<select class="text-primary small" ab-label="STD_R2ANGE" onchange="$(this).parentsUntil('table').find('.ab-range').toggleClass('hidden');">
+	<option value="RGN" >Range</option>
+	<option value="LIK" >Like</option>
+</select>
 </label>
 </td>
 <td style="white-space:nowrap;text-align:right;">
@@ -881,20 +976,21 @@ $this->ABrange["VARCHAR"] = <<<EOC
 <tr class="[=FIELDNAME=]-RG hidden">
 <td>&nbsp;</td>
 <td style="white-space:nowrap;">
-<span class="text-primary" ab-label="STD_FROM" >FROM:</span>&nbsp;
+<span class="text-primary ab-range hidden"  ab-label="STD_LIKE" >LIKE:</span>
+<span class="text-primary ab-range"  ab-label="STD_FROM" >FROM:</span>&nbsp;
 </td>
 <td style="white-space:nowrap;">
 <input type="text" ctype="[=COMPTYPE=]" size=20 onblur="ABsearchCheckRange('AB-[=FIELDNAME=]-FROM');" ab-model="AB-[=FIELDNAME=]-FROM" title="default settings" >
 </td>
 <td>&nbsp;</td>
 </tr>
-<tr class="[=FIELDNAME=]-RG hidden">
+<tr class="[=FIELDNAME=]-RG hidden ">
 <td>&nbsp;</td>
 <td>
-<span class="text-primary" ab-label="STD_TO" >TO:</span>&nbsp;
+<span class="text-primary ab-range" ab-label="STD_TO" >TO:</span>&nbsp;
 </td>
 <td>
-<input type="text" ctype="[=COMPTYPE=]" size=20 onblur="ABsearchCheckRange('AB-[=FIELDNAME=]-TO');" ab-model="AB-[=FIELDNAME=]-TO"   title="default settings" >
+<input class="ab-range" type="text" ctype="[=COMPTYPE=]" size=20 onblur="ABsearchCheckRange('AB-[=FIELDNAME=]-TO');" ab-model="AB-[=FIELDNAME=]-TO"   title="default settings" >
 </td>
 <td>&nbsp;</td>
 </tr>
@@ -991,5 +1087,28 @@ EOC;
 		
 	
 }
+
+class ABSearchLister extends ListerMaster
+{
+	
+	function __construct($inPost,$schema)
+	{
+		parent::__construct($inPost, $schema);
+		$this->dataSource = $inPost["dataSource"];
+		$this->joinSource = $inPost["joinSource"];
+		$this->whereClause = $inPost["whereClause"];
+		$this->mainColumnName = $inPost["mainColumnName"];
+		$this->idColumnName = $inPost["idColumnName"];
+		$this->rootGroups[count($this->rootGroups)]["name"] = $inPost["rootGroupName"];
+		$this->rootGroups[count($this->rootGroups)-1]["maxLength"] = $this->maxLength;
+		$this->rootGroupMapper = array();
+		$this->rootGroupMapper["alphabet"] = $inPost["mainColumnName"];
+		$this->rootGroupMapper[$inPost["rootGroupName"]] = $inPost[$inPost["rootGroupName"]];
+			
+		$this->getListBasedOnRootGroup($inPost["rootGroupName"]);
+	
+	}
+}
+
 
 ?>

@@ -1199,7 +1199,7 @@ $stepCode .= '<td style="white-space:nowrap;width:15%;vertical-align:bottom;">';
 $stepCode .= <<<EOC
 
 	<span  ng-repeat="step in VPU_STEP_LIST" ng-if="y.idVPU_ORST>0 && step.name==y.VPU_ORST_STEPS" >
-		&nbsp;{{step.labeltext}}&nbsp;
+		{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 	</span>
 	<span  ng-if="y.idVPU_ORST<1" class="small text-primary" >
 		&nbsp;{{y.newStepMess}}&nbsp;

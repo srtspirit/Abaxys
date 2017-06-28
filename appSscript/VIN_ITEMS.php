@@ -1208,10 +1208,11 @@ class vin_item_vsl extends dbMaster
 	
 	function dbSetTrig()
 	{
+		$localWhere = "";
 
 		if ($this->E_POST["vin_item_vsl"])
 		{
-			$localWhere = "";
+			
 			$wClause = explode(",",$this->E_POST["vin_item_vsl"]);
 			if(count($wClause)>0)
 			{
@@ -1230,11 +1231,24 @@ class vin_item_vsl extends dbMaster
 			}
 
 		}
+		
+		if ($this->E_POST["orderHistory"])
+		{
+			if (strtoupper($this->E_POST["orderHistory"]) == "OPEN" )
+			{
+				$localWhere .= " VSL_ORST_STEPS < 'KK_PURG' AND ";
+			}
+			if (strtoupper($this->E_POST["orderHistory"]) == "CLOSED" )
+			{
+				$localWhere .= " VSL_ORST_STEPS >= 'KK_PURG' AND ";
+			}
+		}
+		
 		$this->IQ = $localWhere;
 				
 $trig = <<<EOD
 
-			SELECT * FROM
+			SELECT *, (@aa:='{$this->E_POST["orderHistory"]}') as history FROM
 			 
 		 	( SELECT * FROM vin_item 
 		LEFT JOIN vsl_orde  ON VSL_ORDE_ITMID = idVIN_ITEM  [=COND:vsl_orde=]
@@ -1263,9 +1277,10 @@ class vin_item_vpu extends dbMaster
 	function dbSetTrig()
 	{
 
+		$localWhere = "";
 		if ($this->E_POST["vin_item_vpu"])
 		{
-			$localWhere = "";
+			
 			$wClause = explode(",",$this->E_POST["vin_item_vpu"]);
 			if(count($wClause)>0)
 			{
@@ -1284,11 +1299,25 @@ class vin_item_vpu extends dbMaster
 			}
 
 		}
+
+		if ($this->E_POST["orderHistory"])
+		{
+			if (strtoupper($this->E_POST["orderHistory"]) == "OPEN" )
+			{
+				$localWhere .= " VPU_ORST_STEPS < 'KK_PURG' AND ";
+			}
+			if (strtoupper($this->E_POST["orderHistory"]) == "CLOSED" )
+			{
+				$localWhere .= " VPU_ORST_STEPS >= 'KK_PURG' AND ";
+			}
+		}
+
+		
 		$this->IQ = $localWhere;
 				
 $trig = <<<EOD
 
-			SELECT * FROM
+			SELECT *, (@aa:='{$this->E_POST["orderHistory"]}') as history FROM
 			 
 		 	( SELECT * FROM vin_item 
 		LEFT JOIN vpu_orde  ON VPU_ORDE_ITMID = idVIN_ITEM  [=COND:vpu_orde=]
@@ -1367,9 +1396,12 @@ EOD;
 		$newObj["SESSION"] = $dtaObj["SESSION"];
 		$newObj["VIN_CUST_BPART"] = $dtaObj["VIN_CUST_BPART"];
 		$newObj["VIN_CUST_ITMID"] = $dtaObj["VIN_CUST_ITMID"];
-			
-		$newObj["VIN_CUST_LPPAID"] = $dtaObj["VIN_CUST_LPPAID"];
-		$newObj["VIN_CUST_LPDATE"] = $dtaObj["VIN_CUST_LPDATE"];
+		
+		if ($dtaObj["VIN_CUST_LPPAID"])
+		{
+			$newObj["VIN_CUST_LPPAID"] = $dtaObj["VIN_CUST_LPPAID"];
+			$newObj["VIN_CUST_LPDATE"] = $dtaObj["VIN_CUST_LPDATE"];
+		}
 		
 		if (!$newObj["idVIN_CUST"])
 		{
@@ -2038,6 +2070,113 @@ EOD;
 	}
 	
 }
+
+class vin_andreyTest extends dbMaster
+{
+	
+	function vin_andreyTest($schema)
+	{
+		$this->dbMaster("vin_item",$schema);
+	}
+	
+	function dbFindMatch($objDta)
+	{
+		$this->localPost = $objDta;
+		$lister = new vin_itemLister($this->tblInfo->schema);
+		
+		//$lister->getRootGroups(); //step 1
+		$lister->getListBasedOnRootGroup("ItemCategory"); //step 2
+		//$lister->getListBasedOnGroup("ItemCategory", "2"); //step 3
+		//$lister->getListBasedOnGroupAndCondition("ItemCategory", "2", "G"); //step 4 (optional)
+		$this->myLocalPost = $lister;		
+	}
+	
+		
+}
+
+
+class vin_itemLister extends ListerMaster
+{
+    function __construct($schema)
+    {
+    	parent::__construct($schema);
+        $this->tableName = "vin_item";
+        //$this->dataSource = "vin_item"; // for vin_item
+        //$this->dataSource = "vgb_cust join vgb_bpar on idVG_BPAR = VGB_CUST_BPART"; // for customers
+        
+        
+        $this->mainColumnName = "VIN_ITEM_ITMID"; // VGB_BPAR_BPART
+        $this->idColumnName = "idVIN_ITEM";
+        
+        $this->groupings = array();
+        $this->groupings["ItemCategory"] = "VIN_ITEM_SEAR1";
+        $this->groupings["VIN_ITEM_DESC1"] = "ItemDescription";
+        
+        array_push($this->rootGroups, "ItemCategory", "ItemSupplier");
+    }
+    
+    
+    protected function buildGroupQueryFromWhere($rootGroup, $group)
+    {
+       
+            $this->searchResultColumnName = $rootGroup; //in local purpose only
+			$this->searchColumnName = $this->groupings[$rootGroup];
+            $query = <<<EOC
+                
+                FROM {$this->tableName}
+                WHERE {$this->searchColumnName} = {$group} 
+EOC;
+        $this->myquery = $query;
+        
+//         if ($rootGroup == "ItemCategory")
+//        {
+//            $this->searchResultColumnName = "category"; //in local purpose only
+//			$this->searchColumnName = "VIN_ITEM_SEAR1";
+//            $query = <<<EOC
+//                
+//                FROM {$this->tableName}
+//                WHERE {$this->searchColumnName} = {$group} 
+//EOC;
+//        }
+        
+        return $query;
+    }
+    
+    protected function buildQueryBasedOnRootGroup($rootGroup)
+    {
+        
+//        if ($rootGroup == "ItemCategory")
+//        {
+//            $this->searchResultColumnName = "category"; //in local purpose only
+//			$this->searchColumnName = "VIN_ITEM_SEAR1";
+//            $query = <<<EOC
+//                SELECT {$this->searchColumnName} as {$this->searchColumnName}
+//                        ,COUNT(*) as {$this->count}
+//                FROM {$this->tableName}
+//                GROUP BY {$this->searchColumnName}
+//EOC;
+//        }
+        
+       
+            $this->searchResultColumnName = $rootGroup; //in local purpose only
+			$this->searchColumnName = $this->groupings[$rootGroup];
+            
+            $query = <<<EOC
+                SELECT {$this->searchColumnName} as {$this->searchColumnName}
+                        ,COUNT(*) as {$this->count}
+                FROM {$this->tableName}
+                GROUP BY {$this->searchColumnName}
+EOC;
+        
+        
+        
+        
+        return $query;
+    }
+	
+}
+
+
 
 require_once "VGB_PARTNERS.php";
 require_once "HIS_REPORTS_DEVAL.php";

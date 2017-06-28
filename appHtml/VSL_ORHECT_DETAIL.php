@@ -1190,7 +1190,7 @@ $laAttr["class"] = "hidden";
 $inAttr["size"] = "5";
 $inAttr["title"] = "VSL_ORST_ORDQT.{{" . "y.idVSL_ORST" . "}}";
 $inAttr["neg-focus"] = "chkOrstQtySet(x.idVSL_ORDE,y.idVSL_ORST,y.VSL_ORST_STEPS);";
-$inAttr["ng-blur"] = "y.VSL_ORST_ORDQT=chkOrstQty(x.VSL_ORDE_ORLIN,y.idVSL_ORST,y.VSL_ORST_STEPS);";
+$inAttr["ng-blur"] = "chkProfitMargin(x);y.VSL_ORST_ORDQT=chkOrstQty(x.VSL_ORDE_ORLIN,y.idVSL_ORST,y.VSL_ORST_STEPS);";
 $inAttr["id"] = "VSL_ORST_ORDQT{{ y.idVSL_ORST }}";
 $inAttr["chkqty"] = "init";
 
@@ -1229,7 +1229,7 @@ $stepCode .= <<<EOC
 	<span class="ca2ret"></span>
 -->
 	<span  ng-repeat="step in VSL_STEP_LIST" ng-if="y.idVSL_ORST>0 && step.name==y.VSL_ORST_STEPS" >
-		&nbsp;{{step.labeltext}}&nbsp;
+		{{ AB_CPARM.VSL_STEPS_DESCR[step.name] }}
 	</span>
 	<span  ng-if="y.idVSL_ORST<1" class="small text-primary" >
 		&nbsp;{{y.newStepMess}}&nbsp;
@@ -1799,6 +1799,7 @@ $inAttr = $xtmp->inAttrib;
 $grAttr["class"] = "ab-spaceless";
 $laAttr["class"] = "hidden";
 $inAttr["size"] = "4";
+$inAttr["ng-blur"] = "chkProfitMargin(x);";
 $laAttr["ab-label"] = "STD_PRICE";
 
 $xtmp->setFieldWrapper("view01","0.0","vsl_orde","x.VSL_ORDE_OUNET","",$grAttr,$laAttr,$inAttr,"");
@@ -1833,6 +1834,7 @@ $laAttr["ab-label"] = "STD_UOM_SHORT";
 
 $hardCode =<<<EOC
 
+	<input class="hidden" size=2 ng-model="x.VSL_ORDE_COSTP" />
 	<input class="hidden" size=2 ng-model="x.VSL_ORDE_SAUOM" />
 	<input class="hidden" size=2 ng-model="x.VSL_ORDE_UNSET" />
 	<ul class="nav  ab-spaceless " role="tablist"    >
@@ -1920,8 +1922,8 @@ $hardCode = <<<EOC
 ng-if="(quote.VIN_CUST_EXPYN<1 || ABGetDateFn('diff-days',quote.VIN_CUST_EXPIR+','+VSL_ORHE_ODATE)+1>0) && quote.VIN_CUST_BPART == VSL_ORHE_BTCUS && quote.VIN_CUST_ITMID == x.VSL_ORDE_ITMID&&quote.VIN_CUST_SELLP>0&&quote.VIN_CUST_QUONU.trim()!=''">
 
 <td colspan=100 class=" text-right small"  style="white-space:nowrap;" ng-init="x.QuoteFound=1;x.VSL_ORDE_OUNET=(x.idVSL_ORDE<1?quote.VIN_CUST_SELLP:x.VSL_ORDE_OUNET)" >
-<span class="text-danger" ng-if="x.VSL_ORDE_OUNET*1!=quote.VIN_CUST_SELLP*1" ng-init="x.VSL_ORDE_QUONU='0'" >Not used</span> 
-<span class="text-danger" ng-if="x.VSL_ORDE_OUNET*1==quote.VIN_CUST_SELLP*1" ng-init="x.VSL_ORDE_QUONU=quote.idVIN_CUST;" ></span> 
+<span class="text-danger" ng-if="x.VSL_ORDE_OUNET*1!=quote.VIN_CUST_SELLP*1" ng-init="x.VSL_ORDE_QUONU='0';x.VSL_ORDE_QCOST=0;" >Not used</span> 
+<span class="text-danger" ng-if="x.VSL_ORDE_OUNET*1==quote.VIN_CUST_SELLP*1" ng-init="x.VSL_ORDE_QUONU=quote.idVIN_CUST;x.VSL_ORDE_QCOST=quote.VIN_CUST_STDCP;" ></span> 
 <span class="text-primary">Q.Amount</span> 
 {{'$'+quote.VIN_CUST_SELLP}}
 <span class="text-primary"> Exp.</span>

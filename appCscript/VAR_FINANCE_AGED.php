@@ -1,62 +1,44 @@
-<script>
-
-var A_LocalAgular = new A_LocalAgularFn()
-
-function A_LocalAgularFn()
-{
-	
-}
-	
-A_LocalAgularFn.prototype.A_controler = function($scope,$http,$routeParams)
-{
-    
-	 
-	 A_LocalAgular[$scope.opts.Session]($scope,$http,$routeParams);
-	
-}	
-
-A_LocalAgularFn.prototype.HIS_MARGRPT = function($scope,$http,$routeParams)
-{
-
-//	$scope.vapPcFormPg = 0;
-//	$scope.doc_date_to = $scope.ABGetDateFn('get-year','')+$scope.ABGetDateFn('get-month','') + $scope.ABGetDateFn('get-day','')
-//	$scope.doc_date_from = $scope.ABGetDateFn('add-days',$scope.doc_date_to + ",-60");
-	
-	$scope.callLister = function()
-	{
-		var mainTbl = "vgb_cust";
-		var alias = "Andrey";
-		var listObj = new Object();
-		listObj["maxLength"] = 5;
-		listObj["listerData"] = $scope.listerData;
-		A_Scope.callBack = "$scope.callListerDebug(data);";
-		$scope.ABLister(mainTbl,alias,listObj);
-		
-	}	
-
-	$scope.callListerDebug = function(dta)
-	{
-		var occ = 0;
-		while (occ < $scope.Andrey.length)
-		{
-			console.log($scope.Andrey[occ],occ)
-			occ += 1;
-		}
-		console.log(showProps(dta["posts"],"post"))
-		console.log(showProps(dta["posts"]["result"],"result"))
-		console.log(showProps(dta["posts"]["inPost"],"inPost"))
-	}
-		
 	//setting up aging date initial value
-	var today = new Date();
-	var year = today.getFullYear();
-	var month = today.getMonth() + 1;
-	var day = today.getDate();
-	$scope.agingDate = "" + year + (month > 9? month: "0" + month) + (day > 9? day: "0" + day);
+//	var today = new Date();
+//	var year = today.getFullYear();
+//	var month = today.getMonth() + 1;
+//	var day = today.getDate();
+//	$scope.agingDate = "" + year + (month > 9? month: "0" + month) + (day > 9? day: "0" + day);
 	
-	
+	$scope.agingDate = $scope.ABGetDateFn('get-year','')+$scope.ABGetDateFn('get-month','')+$scope.ABGetDateFn('get-day','');
 	$scope.custFilter = new Array();
 
+	$scope.readPartnerCust = function(partnerId)
+	{
+		var outObj = new Object();
+		outObj["idVGB_CUST"] = partnerId;
+		A_Scope.callBack = "$scope.readPartnerAddr('VGB_CUST_BTADD');";
+		$scope.ABchk(outObj,'vgb_cust');
+	}
+
+	$scope.readPartnerAddr = function(fieldName)
+	{
+		var outObj = new Object();
+		outObj["idVGB_ADDR"] = $scope[fieldName];
+		$scope.ABchk(outObj,'vgb_addr');
+	}
+
+	$scope.testCapture = function(ev)
+	{
+
+		try
+		{
+			if($(ev.target).attr('id')=='custselect')
+			{
+				console.log("LEAVING ARE you",$(ev.target).attr("id"))
+    				// ev.preventDefault();
+	     			// ev.stopImmediatePropagation();			
+				
+			}
+ 		}
+		catch(er){console.log("error trying capture",er)}
+	}
+	
 	$scope.daysDiff = function($date1, $date2)
 	{
 		var mSecPerDay = 1000 * 60 * 60 * 24;
@@ -196,6 +178,7 @@ A_LocalAgularFn.prototype.HIS_MARGRPT = function($scope,$http,$routeParams)
 	
 	$scope.fillAgedReport = function()
 	{
+		$scope.idVGB_CUST = 0;
 		var agedTableRef = $scope.var_agedreport;
 		/*
 		response is a table with structure:
@@ -221,28 +204,83 @@ A_LocalAgularFn.prototype.HIS_MARGRPT = function($scope,$http,$routeParams)
 				
 				clientDebt = new Object();
 				clientDebt.name = agedTableRef[i].VGB_CUST_BPNAM;
+				clientDebt.currency = agedTableRef[i].currency;
+				clientDebt.currDesc = agedTableRef[i].VGB_CURR_DESCR;
 				clientDebt.custId = agedTableRef[i].idVGB_CUST;
-				clientDebt.totalDebt = agedTableRef[i].totalDebt + " " + agedTableRef[i].currency;
-				clientDebt.total30 = agedTableRef[i].total30 + " " + agedTableRef[i].currency;
-				clientDebt.total60 = agedTableRef[i].total60 + " " + agedTableRef[i].currency;
-				clientDebt.total90 = agedTableRef[i].total90 + " " + agedTableRef[i].currency;
-				clientDebt.total120 = agedTableRef[i].total120 + " " + agedTableRef[i].currency;
-				clientDebt.totalOld = agedTableRef[i].totalOld + " " + agedTableRef[i].currency;
+				clientDebt.totalDebt = agedTableRef[i].totalDebt;
+				clientDebt.total30 = agedTableRef[i].total30;
+				clientDebt.total60 = agedTableRef[i].total60;
+				clientDebt.total90 = agedTableRef[i].total90;
+				clientDebt.total120 = agedTableRef[i].total120;
+				clientDebt.totalOld = agedTableRef[i].totalOld;
 				clientDebt.invoices = new Array();
 				
 				continue;
 			}
 			
 			clientDebt.invoices.push([agedTableRef[i].invoice
-										,agedTableRef[i].invDate
-										,agedTableRef[i].total30 > 0? agedTableRef[i].total30 + " " + agedTableRef[i].currency: 0
-										,agedTableRef[i].total60 > 0? agedTableRef[i].total60 + " " + agedTableRef[i].currency: 0
-										,agedTableRef[i].total90 > 0? agedTableRef[i].total90 + " " + agedTableRef[i].currency: 0
-										,agedTableRef[i].total120 > 0? agedTableRef[i].total120 + " " + agedTableRef[i].currency: 0
-										,agedTableRef[i].Old > 0? agedTableRef[i].totalOld + " " + agedTableRef[i].currency: 0]);
+					,agedTableRef[i].invDate
+					,agedTableRef[i].total30
+					,agedTableRef[i].total60
+					,agedTableRef[i].total90
+					,agedTableRef[i].total120 
+					,agedTableRef[i].totalOld ]);
+			
+//										,agedTableRef[i].invDate
+//										,agedTableRef[i].total30 > 0? agedTableRef[i].total30 + " " + agedTableRef[i].currency: 0
+//										,agedTableRef[i].total60 > 0? agedTableRef[i].total60 + " " + agedTableRef[i].currency: 0
+//										,agedTableRef[i].total90 > 0? agedTableRef[i].total90 + " " + agedTableRef[i].currency: 0
+//										,agedTableRef[i].total120 > 0? agedTableRef[i].total120 + " " + agedTableRef[i].currency: 0
+//										,agedTableRef[i].Old > 0? agedTableRef[i].totalOld + " " + agedTableRef[i].currency: 0]);
 		}
 		
 		$scope.dummyTable.push(clientDebt);
+		dDta.dummyTable = $scope.dummyTable;
+		dDta.var_agedreport = $scope.var_agedreport;
+	}
+	
+	$scope.setTransacType = function(invRec)
+	{
+		var invoice = invRec[0];
+		if (invoice == 0)
+		{
+			invoice = "Payment";
+		}
+		else
+		{
+			var occ = 2;
+			while (occ < invRec.length)
+			{
+				if (invRec[occ] > 0)
+				{
+					invoice += " Invoice";
+					occ = invRec.length;
+				}
+				if (invRec[occ] < 0)
+				{
+					invoice += " Credit";
+					occ = invRec.length;
+				}
+				
+				occ += 1;
+			}
+				
+			
+		}
+		
+		return invoice;	
+			
+	}
+	
+	$scope.setAmtDisplay= function(invAmt)
+	{
+		var invoice = "-"
+		if (invAmt != 0)
+		{
+			invoice = "$" + invAmt;
+		}
+		
+		return invoice;
 	}
 	
 	$scope.readAr = function()
@@ -440,9 +478,4 @@ A_LocalAgularFn.prototype.HIS_MARGRPT = function($scope,$http,$routeParams)
 	
 	
 	
-}
-
-</script>
-
-
 

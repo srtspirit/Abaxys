@@ -58,6 +58,65 @@ A_LocalAgularFn.prototype.A_controler = function($scope,$http,$routeParams)
 		
 	}	
 	
+	$scope.checkPostalCode = function(messId)
+	{
+		if ($scope.VGB_ADDR_POSTC.trim() != "" && $scope.VGB_ADDR_CNTID > 0 &&  $scope.VGB_ADDR_PRSID > 0)
+		{
+			var tCountry = "";
+			var tRec = $scope.vgb_cntr
+			var occ = 0
+			while (occ < tRec.length)
+			{
+				if (tRec[occ]["idVGB_CNTR"] == $scope.VGB_ADDR_CNTID)
+				{
+					tCountry = tRec[occ]["VGB_CNTR_CNTID"];
+					occ = tRec.length;
+				}
+				occ += 1;
+			}
+			var tProvince = "";
+			var tRec = $scope.vgb_prst
+			var occ = 0
+			while (occ < tRec.length)
+			{
+				if (tRec[occ]["idVGB_PRST"] == $scope.VGB_ADDR_PRSID)
+				{
+					tProvince = tRec[occ]["VGB_PRST_PRSID"];
+					occ = tRec.length;
+				}
+				occ += 1;
+			}
+			
+			var valObj = new Object();
+			valObj.country = tCountry;
+			valObj.province = tProvince;
+			valObj.postalCode = $scope.VGB_ADDR_POSTC.trim();
+			A_Scope.callBack = "$scope.validPostalCode(data,'"+messId+"');";
+			$scope.ABvalidPostalCode(valObj);			
+			
+		}
+	}
+
+	$scope.validPostalCode = function(postal,messId)
+	{
+		var vRec = postal.posts;
+		var chkRet = vRec.valid
+		console.log(showProps(vRec,"pc"));
+		console.log(showProps(chkRet.valRec,"v"));
+		if (chkRet.isValid == false)
+		{
+			$("#"+messId).html("<span class='text-danger'>Invalid" + "</span><span class='caret'></span>");
+			$("#"+messId+"-err").html(chkRet.valRec.error);
+		}
+		else
+		{
+			$("#"+messId).html("<span class='text-primary'>Valid" + "</span>");
+			$("#"+messId+"-err").html("");
+			$scope.VGB_ADDR_POSTC = chkRet.valRec.postal_code;
+		}
+		
+	}
+
 	
 	$scope.getBanks =function()
 	{
@@ -627,6 +686,7 @@ A_LocalAgularFn.prototype.VGB_SVIACT = function($scope,sName)
 		var orderBy = "";
 		var objFunctions = " COUNT(VGB_SVIA_SUPPID) as recCountSupp ";
 		var objGroupBy = "VGB_SVIA_SUPPID";
+		
 		$scope.ABsearchAlias(mainTbl,suppTbls,pattern,alias,orderBy,A_Scope.callBack,objFunctions,objGroupBy);
 		
 	}

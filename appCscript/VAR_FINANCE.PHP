@@ -428,6 +428,13 @@ A_LocalAgularFn.prototype.VAR_OITEMCT = function($scope,$http,$routeParams)
 	
 }
 
+A_LocalAgularFn.prototype.VAR_OITEMAG = function($scope,$http,$routeParams)
+{
+	
+	<?php require_once "../appCscript/VAR_FINANCE_AGED.php"; ?>
+	
+}
+
 </script>
 
 

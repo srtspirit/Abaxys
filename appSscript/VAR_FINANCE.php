@@ -647,6 +647,302 @@ class var_financial extends dbMaster
 	
 }
 
+
+class var_agedreport extends dbMaster
+{
+	function var_agedreport($schema)
+	{
+		$this->dbMaster("var_oihe",$schema);
+	}
+	
+	function dbFindMatch($objDta)
+	{
+		$this->localdbFnct = "Produre aged report";
+		$this->localE_POST = $objDta;
+			
+		$trig = $this->buildTrigger($objDta);
+		
+		$tFnc = new AB_querySession;
+		$trig = $tFnc->tblAccessCond($objDta,$trig,true,"onaccess,onaccess.USR");
+		
+		$dta = array();
+		$dtaType = array();
+		
+		$dta["agingDate"] = $objDta["agingDate"];
+		$dtaType["agingDate"] = PDO::PARAM_STR;
+		
+			
+		
+	  	$ageTbls = new dbMaster("var_oihe",$this->tblInfo->schema);
+		//$ageTbls->dbProcessTransactionPdo($trig);
+		$ageTbls->dbPdoPrep($trig,$dta,$dtaType);		
+
+		foreach($ageTbls as $name => $value)
+		{
+			 $this->$name = $value;
+		}		
+
+		$trig = $this->buildTotalTrigger($objDta);
+		
+		$tFnc = new AB_querySession;
+		$trig = $tFnc->tblAccessCond($objDta,$trig,true,"onaccess,onaccess.USR");
+		
+		$dta = array();
+		$dtaType = array();
+		
+		$dta["agingDate"] = $objDta["agingDate"];
+		$dtaType["agingDate"] = PDO::PARAM_STR;
+		
+			
+		
+	  	$ageTbls = new dbMaster("var_oihe",$this->tblInfo->schema);
+		//$ageTbls->dbProcessTransactionPdo($trig);
+		$ageTbls->dbPdoPrep($trig,$dta,$dtaType);		
+		
+		$occ = 0;
+		while ($occ < count($ageTbls->result))
+		{
+			$this->result[count($this->result)] = $ageTbls->result[$occ];
+			$occ +=1;
+		}
+
+		
+	}
+	
+	function buildTrigger($objDta)
+	{
+	
+		if (count($objDta["custFilter"]) > 0)
+		{
+			$cust = " AND '," . implode(",",$objDta["custFilter"]) . ",' ";
+			$cust .= "LIKE CONCAT('%,',idVGB_CUST,',%') ";
+		}
+		$trig =<<<EOC
+		
+SELECT
+		VGB_CUST_BPNAM
+		,idVGB_CUST
+		,VGB_CURR_DESCR
+		,0 as invoice
+		,0 as invDate
+		,MAX(VGB_CURR_CURID) as currency
+        ,SUM(balance) as totalDebt
+        ,SUM(thirty) as total30
+        ,SUM(sixty) as total60
+        ,SUM(ninety) as total90
+        ,SUM(oneTwenty) as total120
+        ,SUM(old) as totalOld
+FROM
+	(SELECT
+		VGB_CUST_BPNAM
+		,idVGB_CUST
+		,VGB_CURR_DESCR
+		,invoice
+		,VAR_OIHE_DOCDA
+		,balance
+		,VGB_CURR_CURID
+		,CASE
+			WHEN :agingDate - interval 30 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS thirty
+		,CASE
+			WHEN :agingDate - interval 30 day > VAR_OIHE_DOCDA AND :agingDate - interval 60 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS sixty
+		,CASE
+			WHEN :agingDate - interval 60 day > VAR_OIHE_DOCDA AND :agingDate - interval 90 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS ninety
+		,CASE
+			WHEN :agingDate - interval 90 day > VAR_OIHE_DOCDA AND :agingDate - interval 120 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS oneTwenty
+		,CASE
+			WHEN :agingDate - interval 120 day > VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS old
+	FROM
+		(SELECT
+			VGB_CUST_BPNAM
+			,idVGB_CUST
+			,VGB_CURR_DESCR
+			,VAR_OIHE_INVOI AS invoice
+			,VAR_OIHE_DOCDA
+			,CASE
+				WHEN VAR_OIDE_AMUNT IS NULL THEN VAR_OIHE_AMUNT
+				ELSE (MAX(VAR_OIHE_AMUNT) + SUM(VAR_OIDE_AMUNT))
+			END AS balance
+			,VGB_CURR_CURID
+		
+		FROM var_oihe
+		LEFT JOIN var_oide ON VAR_OIDE_OITID = idVAR_OIHE [=COND:var_oide=]
+		JOIN vgb_cust ON idVGB_CUST = VAR_OIHE_BCUST [=COND:vgb_cust=]
+		JOIN vgb_curr ON idVGB_CURR = VAR_OIHE_CURID
+		WHERE  VAR_OIHE_DOCDA < :agingDate
+			{$cust}
+			AND (VAR_OIDE_TRNDA < :agingDate OR VAR_OIDE_TRNDA IS NULL)  [=COND:var_oihe=]
+			
+			
+ 
+
+		GROUP BY VAR_OIHE_BCUST, idVAR_OIHE
+		HAVING balance != 0) x
+	) y
+	GROUP BY VGB_CUST_BPNAM
+    
+UNION
+    
+SELECT  
+		VGB_CUST_BPNAM
+		,idVGB_CUST
+		,VGB_CURR_DESCR
+		,invoice
+		,VAR_OIHE_DOCDA as invDate
+		,VGB_CURR_CURID as currency
+		,0 as balance
+		,CASE
+			WHEN :agingDate - interval 30 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS thirty
+		,CASE
+			WHEN :agingDate - interval 30 day > VAR_OIHE_DOCDA AND :agingDate - interval 60 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS sixty
+		,CASE
+			WHEN :agingDate - interval 60 day > VAR_OIHE_DOCDA AND :agingDate - interval 90 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS ninety
+		,CASE
+			WHEN :agingDate - interval 90 day > VAR_OIHE_DOCDA AND :agingDate - interval 120 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS oneTwenty
+		,CASE
+			WHEN :agingDate - interval 120 day > VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS old
+FROM
+	(SELECT 
+		VGB_CUST_BPNAM
+		,idVGB_CUST
+		,VGB_CURR_DESCR
+		,VAR_OIHE_INVOI AS invoice
+		,VAR_OIHE_DOCDA
+		,CASE
+			WHEN VAR_OIDE_AMUNT IS NULL THEN VAR_OIHE_AMUNT
+			ELSE (MAX(VAR_OIHE_AMUNT) + SUM(VAR_OIDE_AMUNT))
+		END AS balance
+		,VGB_CURR_CURID
+		
+	FROM var_oihe
+	LEFT JOIN var_oide ON VAR_OIDE_OITID = idVAR_OIHE [=COND:var_oide=]
+    JOIN vgb_cust ON idVGB_CUST = VAR_OIHE_BCUST [=COND:vgb_cust=]
+	JOIN vgb_curr ON idVGB_CURR = VAR_OIHE_CURID
+	WHERE VAR_OIHE_DOCDA < :agingDate
+		{$cust}
+		AND (VAR_OIDE_TRNDA < :agingDate OR VAR_OIDE_TRNDA IS NULL) [=COND:var_oihe=]
+	GROUP BY VAR_OIHE_BCUST, idVAR_OIHE
+	HAVING balance != 0) x
+ORDER BY VGB_CUST_BPNAM, invoice;
+
+
+	
+EOC;
+
+		return $trig;
+	}
+	
+	function buildTotalTrigger($objDta)
+	{
+	
+		if (count($objDta["custFilter"]) > 0)
+		{
+			$cust = " AND '," . implode(",",$objDta["custFilter"]) . ",' ";
+			$cust .= "LIKE CONCAT('%,',idVGB_CUST,',%') ";
+		}
+		$trig =<<<EOC
+		
+SELECT
+		VGB_CURR_CURID as VGB_CUST_BPNAM
+		,(@ab:=0) as idVGB_CUST
+		,VGB_CURR_DESCR
+		,0 as invoice
+		,0 as invDate
+		,MAX(VGB_CURR_CURID) as currency
+        ,SUM(balance) as totalDebt
+        ,SUM(thirty) as total30
+        ,SUM(sixty) as total60
+        ,SUM(ninety) as total90
+        ,SUM(oneTwenty) as total120
+        ,SUM(old) as totalOld
+FROM
+	(SELECT
+		(@aa:='rpt_total') as VGB_CUST_BPNAM
+		,idVGB_CUST
+		,VGB_CURR_DESCR
+		,invoice
+		,VAR_OIHE_DOCDA
+		,balance
+		,VGB_CURR_CURID
+		,CASE
+			WHEN :agingDate - interval 30 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS thirty
+		,CASE
+			WHEN :agingDate - interval 30 day > VAR_OIHE_DOCDA AND :agingDate - interval 60 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS sixty
+		,CASE
+			WHEN :agingDate - interval 60 day > VAR_OIHE_DOCDA AND :agingDate - interval 90 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS ninety
+		,CASE
+			WHEN :agingDate - interval 90 day > VAR_OIHE_DOCDA AND :agingDate - interval 120 day <= VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS oneTwenty
+		,CASE
+			WHEN :agingDate - interval 120 day > VAR_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS old
+	FROM
+		(SELECT
+			(@aa:='rpt_total') as VGB_CUST_BPNAM
+			,idVGB_CUST
+			,VGB_CURR_DESCR
+			,VAR_OIHE_INVOI AS invoice
+			,VAR_OIHE_DOCDA
+			,CASE
+				WHEN VAR_OIDE_AMUNT IS NULL THEN VAR_OIHE_AMUNT
+				ELSE (MAX(VAR_OIHE_AMUNT) + SUM(VAR_OIDE_AMUNT))
+			END AS balance
+			,VGB_CURR_CURID
+		
+		FROM var_oihe
+		LEFT JOIN var_oide ON VAR_OIDE_OITID = idVAR_OIHE [=COND:var_oide=]
+		JOIN vgb_cust ON idVGB_CUST = VAR_OIHE_BCUST [=COND:vgb_cust=]
+		JOIN vgb_curr ON idVGB_CURR = VAR_OIHE_CURID
+		WHERE  VAR_OIHE_DOCDA < :agingDate
+			{$cust}
+			AND (VAR_OIDE_TRNDA < :agingDate OR VAR_OIDE_TRNDA IS NULL)  [=COND:var_oihe=]
+			
+			
+ 
+
+		GROUP BY VAR_OIHE_BCUST, idVAR_OIHE
+		HAVING balance != 0) x
+	) y
+	GROUP BY VGB_CUST_BPNAM,VGB_CURR_CURID
+
+EOC;
+
+		return $trig;
+	}
+		
+	
+}
+
+
+
+
 require_once "VGB_PARTNERS.php";
 require_once "VGB_GETNFNU.php";
 require_once "VGL_FINANCE.php";

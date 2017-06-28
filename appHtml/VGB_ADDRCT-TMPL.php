@@ -129,6 +129,7 @@ $grAttr = $xtmp->grAttrib;
 $laAttr = $xtmp->laAttrib;
 $inAttr = $xtmp->inAttrib;
 $inAttr['size'] = "10";
+$inAttr['ng-blur'] = "VGB_ADDR_POSTC=VGB_ADDR_POSTC.toUpperCase();checkPostalCode('postcMess');";
 $xtmp->setFieldWrapper("view01","0.0","vgb_addr","VGB_ADDR_POSTC","",$grAttr,$laAttr,$inAttr,"");
 $addrDetail[count($addrDetail)] = $xtmp->currHtml;					
 
@@ -141,7 +142,7 @@ $inAttr['size'] = "10";
 
 $keepOrg = 0; 
 $repeatIn = "vgb_prst | AB_noDoubles:'idVGB_PRST'";
-$searchIn = "";
+$searchIn = "checkPostalCode('postcMess');";
 $refName = "vgb_prst"; // unique
 $refModel = "VGB_ADDR_PRSID"; // unique
 $repeatInRef = "idVGB_PRST"; //Unique
@@ -190,7 +191,7 @@ $inAttr['size'] = "10";
 
 $keepOrg = 0; 
 $repeatIn = "vgb_cntr | AB_noDoubles:'idVGB_CNTR'";
-$searchIn = "";
+$searchIn = "checkPostalCode('postcMess');";
 $refName = "vgb_cntr"; // unique
 $refModel = "VGB_ADDR_CNTID"; // unique
 $repeatInRef = "idVGB_CNTR"; //Unique
@@ -204,10 +205,28 @@ $hardCode=$xtmp->setListerField($keepOrg,$repeatIn,$searchIn,$refName,$refModel,
 $xtmp->setFieldWrapper("view01","0.0","vgb_addr","VGB_CNTR_CNTID","",$grAttr,$laAttr,$inAttr,$hardCode);
 $addrDetail[count($addrDetail)] = $xtmp->currHtml;					
 
+$hardCode =<<<EOC
+					  <ul class="nav nav-tabs ab-borderless" role="tablist">
+					    <li class="dropdown" style="width:100%;" >
+					    	<span class="dropdown-toggle" data-toggle="dropdown"   >
+							<label class="ab-spaceless"
+							id="postcMess" ></label>
+					      	</span>
+					      <ul class="dropdown-menu" role="menu">
+					        <li>
+						        <label  class="text-danger ab-spaceless small"
+							id="postcMess-err" ></label>
+					        </li>
+					      </ul>
+					    </li>
+					  </ul>
+EOC;
+
 
 echo '<div><div class="row">';
 echo '<div class="col-sm-6">' . $addrDetail[0] . '</div>';
-echo '<div class="col-sm-6">' . $addrDetail[1] . '</div>';
+echo '<div class="col-sm-6"><table><tr><td>' . $addrDetail[1] . '</td><td style="padding:5px;vertical-align:bottom;min-width:300px;" class="small" >';
+echo $hardCode . '</td></tr></table></div>';
 echo '<div class="col-sm-6">' . $addrDetail[2] . '</div>';
 echo '<div class="col-sm-6">' . $addrDetail[3] . '</div>';
 echo '</div></div>';

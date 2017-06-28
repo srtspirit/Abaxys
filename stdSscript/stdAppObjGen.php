@@ -141,7 +141,23 @@ class appForm
 
 	function setFieldWrapper($view,$seq,$tableName,$fieldName,$fieldType,$groupAttrib,$labelAttrib,$inputAttrib,$hardCode)
 	{
-	
+		if (!$this->viewFields)
+		{
+			$this->viewFields = array();
+		}
+		
+		$vFields = count($this->viewFields);
+		$this->viewFields[$vFields]["view"] = $view;
+		$this->viewFields[$vFields]["seq"] = $seq;
+		$this->viewFields[$vFields]["tableName"] = $tableName;
+		$this->viewFields[$vFields]["fieldName"] = $fieldName;
+		$this->viewFields[$vFields]["fieldType"] = $fieldType;
+		$this->viewFields[$vFields]["groupAttrib"] = $groupAttrib;
+		$this->viewFields[$vFields]["labelAttrib"] = $labelAttrib;
+		$this->viewFields[$vFields]["inputAttrib"] = $inputAttrib;
+		$this->viewFields[$vFields]["hardCode"] = $hardCode;
+		
+			
 		$grpAttr = $this->buildAttrib($groupAttrib);
 		$labAttr = $this->buildAttrib($labelAttrib);
 		if (!$inputAttrib["onfocus"])
@@ -228,10 +244,21 @@ class appForm
 			
 		}
 		
-		$this->currHtml = $fieldHtml;	
+		
+		$this->currHtml = $fieldHtml . $this->setFieldAttribute($tableName,$fieldName);	
 	
 	}
 	
+	function setFieldAttribute($tbl,$fld)
+	{
+		$tblObj = $_SESSION["ABtblLayout"][$tbl];
+		$ret = "<span ab-afa='tbl:" . $tbl . $tblObj["tblInfo"]["tblName"] . ",fld:".$fld ."' ></span>";
+		return $ret;
+		
+
+
+				
+	}
 
 function setListerFieldOld($keepOrg,$repeatIn,$searchIn,$refName,$refModel,$searchInRef,$searchRefDesc,$repeatInRef,$refDesc,$refDetail,$refDetailLink,$ignTrig)
 {	
@@ -456,7 +483,7 @@ $divHtml = <<<BOD
 		<ul class="dropdown-menu ab-spaceless"  role="menu"  >
 			<li class="dropdown ab-border ab-spaceless ab-pointer" 
 			ng-repeat="ab_rloop in rawResult.{$repeatIn}"
-			ng-click="ABsetField('{$refModel}',ab_rloop.{$repeatInRef});"  >
+			ng-click="ABsetField('{$refModel}',ab_rloop.{$repeatInRef});{$searchIn}"  >
 				<div style="width:100%;" {$refDetailLink} >
 					<span ng-if="ab_rloop.{$repeatInRef}!={$refModel}"
 					class="small "  >
@@ -832,13 +859,216 @@ function setSearchMaster($params)
 	$objFunctions = $params["objFunctions"];
 	$objGroupBy = $params["objGroupBy"];
 	$dspViewer = $params["dspViewer"];
-	
+
 	$xxRandom = mt_rand();	
+	
+	
+	$rootGroupSelect = explode(",",$params["rootGroup"]);
+	$rootGroup =  $params["rootGroup"];
+	$rootGroup =  $rootGroupSelect[0];
+	
+	$MClassDsp = ""; // Classofication
+	$MSubDisplay = ""; // Submit Std
+	$MSubDisplayFilter = ""; // Submit Std
+	if ($rootGroup)
+	{
+		$rootGroupTrail = ":0";
+		$occ=0;
+
+$MClassDsp .= <<<EOC
+
+<div class="dropdown" 
+
+>
+	<span class="ab-spaceless dropdown-toggle"  data-toggle="dropdown" >
+		<span ng-init="ABsetRootGroup('{$params["rootGroup"]}','{$searchResult}_class_{$xxRandom}',0)">
+		</span>								
+		<span ng-repeat="class in {$searchResult}_class_{$xxRandom}" ng-if="class.current==true">
+			<span >{{class.fieldLabel}}</span>
+		</span>
+		<span ng-if="'{$params["rootGroup"]}'!=''&&{$searchResult}_class_{$xxRandom}.length==0">Classification</span>
+		<span class="caret"></span>
+	</span>
+	<ul class="dropdown-menu text-primary">
+
+
+	
+
+EOC;
+
+
+$MClassDsp .= <<<EOC
+
+
+		<li class=" ab-border ab-spaceless ab-pointer" 
+		ng-repeat="class in {$searchResult}_class_{$xxRandom}  | AB_Sorted:'tableName'" 
+		ng-click="
+		ABsetRootGroup('{$params["rootGroup"]}','{$searchResult}_class_{$xxRandom}',class.pageNo);
+		ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern{$searchResult},'{$searchResult}','{$orderBy}','{$callBack}','{$objFunctions}','{$objGroupBy}',class.rootObject+':0')" 
+		ng-if="class.current!=true&&ABsPattern{$searchResult}_sType=='STD'"  >
+		
+		
+			<span class="small text-primary ab-strong"  title="{{class.rootObject}}"	>
+				<span  >&nbsp;{{class.fieldLabel}}</span>
+			</span>
+		</li>
+
+		<li class=" ab-border ab-spaceless ab-pointer" 
+		ng-repeat="class in {$searchResult}_class_{$xxRandom}  | AB_Sorted:'tableName'" 
+		ng-click="
+		ABsetRootGroup('{$params["rootGroup"]}','{$searchResult}_class_{$xxRandom}',class.pageNo);
+		ABsearchSubmit('ABsPattern{$searchResult}','{$searchResult}','{$callBack}','{$objFunctions}','{$objGroupBy}',class.rootObject+':0');
+		ABsetCurTable('','{$searchResult}');"
+		ng-if="class.current!=true&&ABsPattern{$searchResult}_sType=='FILTER'"  >
+		
+		
+			<span class="small text-primary  ab-strong" >
+				<span>&nbsp;{{class.fieldLabel}}</span>
+			</span>
+		
+		</li>	
+
+
+		<li class=" ab-border ab-spaceless ab-pointer" 
+		ng-click="
+		ABsetRootGroup('','{$searchResult}_class_{$xxRandom}',0);
+		ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern{$searchResult},'{$searchResult}','{$orderBy}','{$callBack}','{$objFunctions}','')" 
+		ng-if="'{$params["rootGroup"]}'!=''&&ABsPattern{$searchResult}_sType=='STD'&&{$searchResult}_class_{$xxRandom}.length>0"  >
+	
+			<span class="small text-primary ab-strong"  title="{{class.rootObject}}"	>
+				<span  >&nbsp;Clear classification</span>
+			</span>
+		</li>
+		<li class=" ab-border ab-spaceless ab-pointer" 
+		ng-click="
+		ABsetRootGroup('{$params["rootGroup"]}','{$searchResult}_class_{$xxRandom}',0);"
+		
+		ng-if="'{$params["rootGroup"]}'!=''&&ABsPattern{$searchResult}_sType=='STD'&&{$searchResult}_class_{$xxRandom}.length==0"  >
+	
+			<span class="small text-primary ab-strong"  title="{{class.rootObject}}"	>
+				<span  >&nbsp;Reset classification</span>
+			</span>
+		</li>
+			
+		<li class=" ab-border ab-spaceless ab-pointer" 
+		ng-click="
+		ABsetRootGroup('','{$searchResult}_class_{$xxRandom}',0);
+		ABsearchSubmit('ABsPattern{$searchResult}','{$searchResult}','{$callBack}','{$objFunctions}','{$objGroupBy}',{$searchResult}_class_{$xxRandom}_rootObject+':'+{$searchResult}_class_{$xxRandom}_pageNo);
+		ABsetCurTable('','{$searchResult}');"
+		ng-if="'{$params["rootGroup"]}'!=''&&ABsPattern{$searchResult}_sType=='FILTER'&&{$searchResult}_class_{$xxRandom}.length>0"  >
+	
+			<span class="small text-primary ab-strong"  title="{{class.rootObject}}"	>
+				<span  >&nbsp;Clear classification1</span>
+			</span>
+		</li>
+
+		<li class=" ab-border ab-spaceless ab-pointer" 
+		ng-click="
+		ABsetRootGroup('{$params["rootGroup"]}','{$searchResult}_class_{$xxRandom}',0);"
+		ng-if="'{$params["rootGroup"]}'!=''&&ABsPattern{$searchResult}_sType=='FILTER'&&{$searchResult}_class_{$xxRandom}.length==0"  >
+	
+			<span class="small text-primary ab-strong"  title="{{class.rootObject}}"	>
+				<span  >&nbsp;Reset classification1</span>
+			</span>
+		</li>
+
+
+EOC;
+
+$MClassDsp .= "</ul></div>";
+
+
+		
+//		while($occ < count($rootGroupSelect))
+//		{
+			
+$MSubDisplay .= <<<EOC
+		
+<span ng-if="ABsPattern{$searchResult}_cIndex=={$occ}" >
+<button id="ABsPattern{$searchResult}" 
+class="ab-borderless text-primary small ab-pointer" 
+ng-click="ABsPattern{$searchResult}_sType='STD';ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern{$searchResult},'{$searchResult}','{$orderBy}','{$callBack}','{$objFunctions}','{$objGroupBy}',{$searchResult}_class_{$xxRandom}_rootObject+':'+{$searchResult}_class_{$xxRandom}_pageNo)" >
+<span ab-label="STD_SUBMIT"> Find</span>
+
+
+</button>
+</span>
+
+EOC;
+
+$MSubDisplayFilter .= <<<EOC
+
+<span 	onclick="$('#ABSTDATA{$searchTable}{$xxRandom}').toggleClass('hidden');"
+	ng-click="ABsPattern{$searchResult}_sType='FILTER';ABsearchSubmit('ABsPattern{$searchResult}','{$searchResult}','{$callBack}','{$objFunctions}','{$objGroupBy}',{$searchResult}_class_{$xxRandom}_rootObject+':0');ABsetCurTable('','{$searchResult}');" 
+	class="btn btn-success btn-md ab-strong" >
+	<span ab-label="STD_SUBMIT" >Submit to Search</span>
+	&nbsp;
+	<span ab-label="STD_FILTERS" ></span>
+	{{{$searchResult}_class_{$xxRandom}_rootObject+':'+{$searchResult}_class_{$xxRandom}_pageNo}}
+</span>
+
+
+EOC;
+
+
+
+
+//			if ($occ > 0)
+//			{
+//
+//
+//			}
+//			$occ += 1;
+//		}
+		
+
+
+		
+		
+	}
+	else
+	{
+		$rootGroupTrail = "";
+
+$MSubDisplay .= <<<EOC
+			
+
+<button id="ABsPattern{$searchResult}" 
+class="ab-borderless text-primary small ab-pointer" 
+ng-click="ABsPattern{$searchResult}_sType='STD';ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern{$searchResult},'{$searchResult}','{$orderBy}','{$callBack}','{$objFunctions}','','')" >
+<span ab-label="STD_SUBMIT"> Find</span>
+</button>
+
+
+
+
+EOC;
+
+
+$MSubDisplayFilter .= <<<EOC
+
+<span 	onclick="$('#ABSTDATA{$searchTable}{$xxRandom}').toggleClass('hidden');"
+	ng-click="ABsPattern{$searchResult}_sType='FILTER';ABsearchSubmit('ABsPattern{$searchResult}','{$searchResult}','{$callBack}','{$objFunctions}','{$objGroupBy}','');ABsetCurTable('','{$searchResult}');" 
+	class="btn btn-success btn-md ab-strong" >
+	<span ab-label="STD_SUBMIT" >Submit to Search</span>
+	&nbsp;
+	<span ab-label="STD_FILTERS" ></span>
+	{{{$searchResult}_class_{$xxRandom}_rootObject+':'+{$searchResult}_class_{$xxRandom}_pageNo}}
+</span>
+
+
+EOC;
+	}
+
+
+	
+	
+
 	
 $searchMaster = <<<EOC
 
 <div  >
-	<div class="{{ABsearchTbl=='{$searchResult}'?'':'hidden'" >
+	<div class="{{ABsearchTbl=='{$searchResult}'?'':'hidden'"  >
 
 		<table class="hidden small ab-border ab-spaceless" >
 			<tr>
@@ -850,10 +1080,13 @@ $searchMaster = <<<EOC
 				</td>
 				<td>
 					{{  ABMasterInfo["{$searchResult}"]["tblStats"].totalRecs  }}
+					<input ng-model="ABsPattern{$searchResult}_sType" ng-init="ABsPattern{$searchResult}_sType='STD'" />
+					<input ng-model="ABsPattern{$searchResult}_cIndex" ng-init="ABsPattern{$searchResult}_cIndex=0" />
 				</td>
 			</tr>
 		</table>
 
+		
 	
 	<form>
 
@@ -875,19 +1108,10 @@ $searchMaster = <<<EOC
 					<input class="hidden" id="ABsOrder{$searchResult}" value="{$orderBy}" />
 					
 					<input ng-model="ABsPattern{$searchResult}" class="small" size=30 title="Wild card search all fields" />
-					<button id="ABsPattern{$searchResult}" 
-					class="ab-borderless text-primary small ab-pointer" 
-					ng-click="ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern{$searchResult},'{$searchResult}','{$orderBy}','{$callBack}','{$objFunctions}','{$objGroupBy}')" >
-						<span ab-label="STD_SUBMIT"> Find</span>
-					</button>					
-					<!--
-					<input ng-model="ABsPattern" class="small" size=30 title="Wild card search all fields" />
-					<button id="{{ABsearchTbl=='{$searchResult}'?'ABsPattern':''}}" 
-					class="ab-borderless text-primary small ab-pointer" 
-					ng-click="ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern,'{$searchResult}','{$orderBy}')" >
-						<span ab-label="STD_SUBMIT"> Find</span>
-					</button>
-					-->
+					<span ng-if="ABsearchTbl=='{$searchResult}'" ng-init="ABsetRootGroup('{$params["rootGroup"]}','{$searchResult}_class_{$xxRandom}',0)" ></span>
+					{$MSubDisplay}
+
+
 					&nbsp;&nbsp;&nbsp;&nbsp;
 					<span 	
 						class="ABSTFILT{$searchTable} btn btn-success btn-md {$searchFilter}" 
@@ -903,6 +1127,92 @@ $searchMaster = <<<EOC
 					<span ab-label="STD_WAIT" class="{{ABsearchWait=='on'?'':'hidden'}}"></span>
 					{{ABREQUEST}}
 					
+				</td>
+				<td>
+					&nbsp;&nbsp;
+				</td>
+				
+				<td>
+					&nbsp;&nbsp;
+				</td>
+				<td class="small" style="vertical-align:top;">
+					<table  >
+					<tr>
+						<td class=" " style="vertical-align:top;" >
+							<div ng-if="{$searchResult}_class_{$xxRandom}.length>0" class="small text-primary ab-underline">Classification</div>
+							<div>
+								{$MClassDsp}
+							</div>
+						</td>
+						<td>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+						</td>
+
+						<td class=" " style="vertical-align:top;" ng-if="{$searchResult}_class_{$xxRandom}.length>0">
+							<div ng-if="{$searchResult}_rootGroup.length>0" class="small text-primary ab-underline" >Cathegory</div>
+							<div class="dropdown" ng-if="{$searchResult}_rootGroup.length>0 && ABsPattern{$searchResult}_sType=='STD'" >
+								
+								<span class="ab-spaceless dropdown-toggle ab-strong"  data-toggle="dropdown" >
+									<span ng-repeat="root in {$searchResult}_rootGroup" ng-if="root.current==true">
+										<span  >{{root.DESCRIPTOR}}-({{root.count}})</span>
+									</span>
+									<span class="caret"></span>
+								</span>
+								
+								
+								<ul class="dropdown-menu text-primary">
+									<li class="text-primary ab-border ab-spaceless ab-pointer" 
+									ng-repeat="root in {$searchResult}_rootGroup  | AB_Sorted:'DESCRIPTOR'" 
+									ng-if="root.current!=true"  
+									ng-click="ABsearchAlias('{$searchTable}','{$searchJoin}',ABsPattern{$searchResult},'{$searchResult}','{$orderBy}','{$callBack}','{$objFunctions}','{$objGroupBy}',{$searchResult}_class_{$xxRandom}_rootObject+':'+root.index)"
+									>
+										<span class="small text-primary ab-strong"   >
+											<span  >{{root.DESCRIPTOR}}-({{root.count}})</span>
+										</span>
+									</li>
+								</ul>
+							</div>
+							<div class="dropdown" ng-if="{$searchResult}_rootGroup.length>0 && ABsPattern{$searchResult}_sType=='FILTER'" >
+								<span class="ab-spaceless dropdown-toggle ab-strong"  data-toggle="dropdown" >
+									<span ng-repeat="root in {$searchResult}_rootGroup" ng-if="root.current==true">
+										<span  >{{root.DESCRIPTOR}}-({{root.count}})</span>
+									</span>
+									<span class="caret"></span>
+								</span>
+								
+								
+								<ul class="dropdown-menu">
+									<li class="text-primary ab-border ab-spaceless ab-pointer" 
+									ng-repeat="root in {$searchResult}_rootGroup" 
+									ng-if="root.current!=true"  
+									ng-click="ABsearchSubmit('ABsPattern{$searchResult}','{$searchResult}','{$callBack}','{$objFunctions}','{$objGroupBy}',{$searchResult}_class_{$xxRandom}_rootObject+':'+root.index);ABsetCurTable('','{$searchResult}');"
+									>
+										<a class="small ab-strong"   >
+											<span  >{{root.DESCRIPTOR}}-({{root.count}})</span>
+										</a>
+									</li>
+								</ul>
+							</div>
+						</td>
+							
+					</tr>
+					<tr>
+						<td>
+						</td>
+						<td>
+						
+						</td>
+					</tr>
+					</table>					
+				</td>
+				<td>
+					&nbsp;&nbsp;
+				</td>
+												
+				<td>
+				</td>
+				<td>
+					&nbsp;&nbsp;
 				</td>
 			</tr>
 			<tr>
@@ -940,13 +1250,8 @@ $searchMaster = <<<EOC
 				</label>
 				&nbsp;&nbsp;&nbsp;&nbsp;
 				<span class="{{ABrangeSubmit==true?'':'hidden'}} " >
-					<span 	onclick="$('#ABSTDATA{$searchTable}{$xxRandom}').toggleClass('hidden');"
-						ng-click="ABsearchSubmit('ABsPattern{$searchResult}','{$searchResult}','{$callBack}','{$objFunctions}','{$objGroupBy}');ABsetCurTable('','{$searchResult}');" 
-						class="btn btn-success btn-md ab-strong" >
-						<span ab-label="STD_SUBMIT" >Submit to Search</span>
-						&nbsp;
-						<span ab-label="STD_FILTERS" ></span>
-					</span>
+				{$MSubDisplayFilter}
+				
 				</span>
 									
 			</td>
@@ -1072,6 +1377,10 @@ EOC;
 
 }
 
+	function setTableClassification()
+	{
+	}
+		
 }
 
 // UNDER BEGIN

@@ -509,7 +509,7 @@ A_LocalAgularFn.prototype.VPU_INVOCT = function($scope,$http,$routeParams)
 	{
 		var tmpObj = new Object();
 		tmpObj["idVPU_ORHE"] = 0;
-		A_Scope.callBack = "$scope.computeGroupTotal();";
+		A_Scope.callBack = "$scope.provCost = new Array();$scope.computeGroupTotal();";
 		$scope.ABchk(tmpObj,"vpu_invoice");
 	}
 	
@@ -527,6 +527,11 @@ A_LocalAgularFn.prototype.VPU_INVOCT = function($scope,$http,$routeParams)
 					total[receiptID] = 0;
 				}
 				total[receiptID] += ($scope.rawResult.vpu_invoice[occ].EXTENSION*1);
+			}
+			else
+			{
+				var rec = $scope.rawResult.vpu_invoice[occ];
+				$scope.vpu_invoctAddProvCost(rec.VPU_ORST_DELID,rec.idVIN_ITEM,rec.VIN_ITEM_ITMID,rec.VIN_ITEM_DESC1,rec.EXTENSION*1,rec.idVPU_ORST,rec.VPU_ORDE_OLTYP);
 			}
 			occ += 1;
 		}
@@ -546,10 +551,7 @@ A_LocalAgularFn.prototype.VPU_INVOCT = function($scope,$http,$routeParams)
 	
 	$scope.vpu_invoctInsertItem = function(delId)
 	{
-		if (!$scope.provCost)
-		{
-			$scope.provCost = new Array();
-		}
+
 		if ( $scope.abSessionResponse.VIN_ITEM_INVIT != 0)
 		{
 			A_Scope.ABDisplayMessage("<span class='text-danger'>Must be a service item</span>");
@@ -568,16 +570,32 @@ A_LocalAgularFn.prototype.VPU_INVOCT = function($scope,$http,$routeParams)
 		}
 		if (recFound == false)
 		{
-			var nRec = $scope.provCost.length;
-			$scope.provCost[nRec] = new Object();
-			$scope.provCost[nRec].idVIN_ITEM = $scope.abSessionResponse.idVIN_ITEM;
-			$scope.provCost[nRec].VIN_ITEM_ITMID = $scope.abSessionResponse.VIN_ITEM_ITMID;
-			$scope.provCost[nRec].VIN_ITEM_DESC1 = $scope.abSessionResponse.VIN_ITEM_DESC1;
-			$scope.provCost[nRec].delId = delId;
-			$scope.provCost[nRec].amount = 0;
-			A_Scope.ABDisplayMessage("");
+			$scope.vpu_invoctAddProvCost(delId,$scope.abSessionResponse.idVIN_ITEM,$scope.abSessionResponse.VIN_ITEM_ITMID,$scope.abSessionResponse.VIN_ITEM_DESC1,0,0,"EXP");
 		}
 				
+	}
+
+
+	$scope.vpu_invoctAddProvCost = function(delId,idITEM,ITMID,DESC1,amt,orstId,oltyp)
+	{
+
+		if (!$scope.provCost)
+		{
+			$scope.provCost = new Array();
+		}
+		
+		var nRec = $scope.provCost.length;
+		$scope.provCost[nRec] = new Object();
+		$scope.provCost[nRec].idVIN_ITEM = idITEM;
+		$scope.provCost[nRec].VIN_ITEM_ITMID = ITMID;
+		$scope.provCost[nRec].VIN_ITEM_DESC1 = DESC1;
+		$scope.provCost[nRec].VPU_ORDE_FACTO = 1;
+		$scope.provCost[nRec].delId = delId;
+		$scope.provCost[nRec].amount = amt;
+		$scope.provCost[nRec].orstId = orstId;
+		$scope.provCost[nRec].oltyp = oltyp;
+		$scope.provCost[nRec].ignore = 0;
+		
 	}
 	
 	$scope.isSelected = function(delID)

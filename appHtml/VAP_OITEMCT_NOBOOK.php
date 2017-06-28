@@ -43,7 +43,7 @@
 								
 								<input class="hidden" ng-model="VIN_ITEM_ITMID" />
 
-							</span>	
+							</span>
 							<span class="ab-strong" ng-if="vpu.newItem!='1' ">
 							{{vpu.VIN_ITEM_ITMID}}
 							</span>
@@ -51,8 +51,11 @@
 							<input class="hidden" ng-model="vpu.VIN_ITEM_INVIT" />
 							<input class="hidden" ng-model="vpu.newItem" />
 							
-							<span class="small">
-							-{{vpu.VPU_ORDE_DESCR}}
+							<span class="small" ng-if="vpu.newItem!='1' ">
+							-<input size=30 readonly class="ab-borderless" ng-model="vpu.VPU_ORDE_DESCR" />
+							</span>
+							<span class="small" ng-if="vpu.newItem=='1' ">
+							-<input size=30 ng-model="vpu.VPU_ORDE_DESCR" />
 							</span>
 							<input class="hidden" ng-model="vpu.VIN_ITEM_ITTXT" />
 							<input class="hidden" ng-model="vpu.VPU_ORDE_OLTYP" ng-init="vpu.VPU_ORDE_OLTYP='EXP'" />

@@ -34,12 +34,13 @@ $_SESSION["lastPost"] =  $inPost;
 
 require_once "stdSessionVarQuery.php" ;
 require_once "stdPHPfunctions.php" ;
-require_once "stdMasterClasses.php" ;
-require_once "stdSearchMaster.php" ;
-require_once "stdListerMaster.php" ;
-// require_once "stdAppobjGen.php";
 
-// require_once "stdAmountWords.php";
+require_once "stdMasterClasses.php" ;
+
+require_once "stdListerMaster.php" ;
+
+require_once "stdSearchMaster.php" ;
+
 
 
 
@@ -467,14 +468,14 @@ if ($inPost['METHOD'] == "SEARCHMASTER")
 
 if ($inPost['METHOD'] == "SEARCHLISTER")
 {
-	$tblQuery = new ItemLister($schema);
+	$tblQuery = new ItemLister($inPost, $schema);
 	// $tblQuery = ListerMaster::createListerInstance($schema,$inPost);
 	
 	//$tblQuery->getListBasedOnGroup($inPost["group"], "2");
 	//$tblQuery->getListBasedOnGroup("ItemCategory", "3");
 	//$tblQuery->getRootGroups();
 	//$tblQuery->getListBasedOnRootGroup("ItemCategory");
-	$tblQuery->getListBasedOnGroup("ItemCategory", "2");
+	//$tblQuery->getListBasedOnGroup("ItemCategory", "2");
 	echo json_encode(array('posts' => $tblQuery));
 	exit;		
 }

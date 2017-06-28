@@ -14,21 +14,59 @@
 	</div>
 	
 <div class="ab-spaceless" >
-
+<input 
+<input class="hidden"  id="VIN_ITEMsearch" 
+ng-click="
+ABinitModelsClear();
+ABinitTbl('vin_item','idVIN_ITEM');
+ABupdChkObj('idVIN_ITEM',abSessionResponse.idVIN_ITEM,true);
+ABchkMain();opts.updType='UPDATE';
+ABsetSessionHistory(0,'updType','UPDATE');
+ABsetSessionHistory(0,'idVIN_ITEM',abSessionResponse.idVIN_ITEM);" />
 
 <div id="ab-new" >
-	<label  title="CREATE" class="{{opts.updType=='CREATE'?'hidden':''}}">
-		 <a href="#VIN_ITEMS/VIN_ITEMCT/Process:VIN_ITEMS,Session:VIN_ITEMCT,tblName:vin_item,updType:CREATE,idVIN_ITEM:0" >
-			<span >New</span>
-			<span  class="glyphicon glyphicon-pencil" ></span>
-		</a>			
-	</label>
+
+	<div class="ab-spaceless">
+		
+		<table style="width:100%;">
+			<tr>
+				<td style="width:50%;">
+					<span class="btn btn-default ab-spaceless" 
+					ng-click="ABsearchTbl='vin_item';ABsessionLink('','#VIN_ITEMsearch','vin_item');" >
+					
+						<span class="text-primary">
+							Edit
+							<span  class="glyphicon glyphicon-pencil" ></span>
+						</span>	
+					</span>
+				</td>
+				<td style="width:50%;" class="text-right {{opts.updType=='CREATE'?'hidden':''}}">
+					
+					 <span class="btn btn-default ab-spaceless"
+					 ng-click="
+					 	ABinitModelsClear();
+						ABinitTbl('vin_item','idVIN_ITEM');
+						ABupdChkObj('idVIN_ITEM',0,true);
+						ABchkMain();opts.updType='CREATE';
+						ABsetSessionHistory(0,'updType','CREATE');
+						ABsetSessionHistory(0,'idVIN_ITEM',0);"
+					>
+						<span class="text-primary">
+							<span >New</span>
+							<span  class="glyphicon glyphicon-pencil" ></span>
+						</span>
+					</span>
+					
+				</td>
+			</tr>
+		</table>		
+	</div>
 </div>
 
 
 
 	<script>
-		$('#ab-appOpt').html('&nbsp;&nbsp;' + $('#ab-new').html());
+		$('#ab-appOpt').html( $('#ab-new').html());
 		$('#ab-new').html('');
 	</script>
 
@@ -935,6 +973,7 @@ $clin = 'ab-panel="1" class=" col-lg-11 panel-collapse collapse in"';
 
 $dispHtml .= '<div id="' . $func . '" ' . $clin .' ><div class="panel-body row">';
 
+$dispHtml .= '<script>if(!dDta["'.$func.'"]){dDta["'.$func.'"]= new Object()};</script>';
 
 $detailHtml .= "\n Func=(" . $func . ")";
 
@@ -945,11 +984,24 @@ $detailHtml .= "\n Func=(" . $func . ")";
 		
 		foreach($xObj as $name => $value)
 		{
+			
+			$wscript= '<script>';
+			$wscript.= 'dDta["'.$func.'"]["'.$value["fieldName"].'"] = new Object();';
+			foreach($value as $vname => $vval)
+			{
+				if ($vname != "Html")
+				{
+					$wscript.= 'dDta["'.$func.'"]["'.$value["fieldName"].'"]["'.$vname . '"] = "'.$vval.'";';
+				}
+			}
+			// $wscript.= 'dDta["{$func}"][{$value["fieldName"]}]["Html"] = "{$value["Html"]}";';
+			$wscript.= '</script>';
+			// $wscript = "";
 			$detailHtml .= "\n(" . $name . ") tableName:" . $value['tableName'];  
 			$detailHtml .= " -fieldName:" . $value['fieldName'];  
 			$detailHtml .= " -fieldType:" . $value['fieldType'];  
 
-			$dispHtml .= $value['Html'];
+			$dispHtml .= $value['Html'] . $wscript;
 			$objCount += 1;
 			if ($objCount > 2)
 			{

@@ -18,6 +18,9 @@ A_LocalAgularFn.prototype.A_controler = function($scope,$http,$routeParams)
 A_LocalAgularFn.prototype.VIN_ITEMS = function($scope,$http,$routeParams) 
 {
 
+	$scope.orderHistoryVSL = "OPEN";
+	$scope.orderHistoryVPU = "OPEN";
+	
 	$scope.orderRefresh = function()
 	{
 		
@@ -26,16 +29,45 @@ A_LocalAgularFn.prototype.VIN_ITEMS = function($scope,$http,$routeParams)
 		{
 			$scope.orderQuery();
 			$scope.idVIN_ITEM = 0; //$scope.VSL_ORDE_ITMID;
-			$scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vsl','vin_item_vsl','vsl_item');
-			$scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vpu','vin_item_vpu','vpu_item');
+			$scope.orderHistory = $scope.orderHistoryVSL;
+			A_Scope.callBack = "$scope.orderHistory = $scope.orderHistoryVPU;$scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vpu,orderHistory','vin_item_vpu','vpu_item');";
+			$scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vsl,orderHistory','vin_item_vsl','vsl_item');
+			
+			// $scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vpu','vin_item_vpu','vpu_item');
 			
 		},500);
-		 
+	}
+
+	$scope.getItemDetailSales = function(itmId,flag)
+	{
+			$scope.orderHistoryVSL = flag.toUpperCase();
+			$scope.orderQuery();
+			$scope.orderHistory = flag.toUpperCase();
+			$scope.idVIN_ITEM = itmId; //$scope.VSL_ORDE_ITMID;
+			$scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vsl,orderHistory','vin_item_vsl','vsl_item');
+	}
+
+	$scope.getItemDetailPurch = function(itmId,flag)
+	{
+			$scope.orderHistoryVPU = flag.toUpperCase();
+			$scope.orderQuery();
+			$scope.orderHistory = flag.toUpperCase();
+			$scope.idVIN_ITEM = itmId; //$scope.VSL_ORDE_ITMID;
+			$scope.ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_item_vpu,orderHistory','vin_item_vpu','vpu_item');
 	}
 	
 	$scope.kPress = function (ce,obj,tbl,dir)	
 	{
 		$scope.ABlstAlias(ce,obj,tbl,"vin_item","vin_item")
+	}
+	
+	$scope.testAndrey = function()
+	{
+		var obj = new Object();
+		obj["idVIN_ITEM"] = 0;
+		obj.rootGroup = "itemCategory";
+		
+		$scope.ABchkMain(obj,"vin_andreyTest")	
 	}
 	
 	$scope.orderQuery = function ()

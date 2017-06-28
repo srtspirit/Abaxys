@@ -252,29 +252,39 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 			<input  class="hidden" ab-btrigger="vpu_invoice" ng-model="idVPU_ORHE" /> 
 			<input class="hidden" ng-model="VPU_INVOICE"  ng-init="VPU_INVOICE='vpu_invoice'" />
 			<input class="hidden" ng-model="deliveryID" ng-init="deliveryID=''" />
+			</form>
 			<div class="hidden" id="costingData" >
-			
-			<div ng-repeat="vRow in  rawResult.vpu_invoice | AB_noDoubles:'idVPU_ORHE,VPU_ORST_DELID' " ng-if="isSelected(vRow.VPU_ORST_DELID)>0" >	
-
-				<div ng-repeat="dRow in  rawResult.vpu_invoice | AB_noDoubles:'idVPU_ORHE,idVPU_ORDE,idVPU_ORST' " 
-					ng-if="dRow.VPU_ORST_DELID==vRow.VPU_ORST_DELID" >	
-					<input ng-model="dRow.VPU_ORST_DELID" class="hidden" />
-					<input ng-model="dRow.idVIN_ITEM" class="hidden" />
-					<input ng-model="dRow.VPU_ORST_ORDQT" class="hidden" />
-					<input ng-model="dRow.VPU_ORDE_OUNET" class="hidden" />
-					<input ng-model="dRow.EXTENSION" class="hidden" />
-					<input ng-model="dRow.percent" size=2 />
+				<div ng-repeat="vRow in  rawResult.vpu_invoice | AB_noDoubles:'idVPU_ORST' " 
+				ab-formlist="invo_list"
+				ng-if="isSelected(vRow.VPU_ORST_DELID)>0 && vRow.VPU_ORDE_OLTYP == 'STD'  " >	
+				<form   ab-view="vpu_orde" ab-main="vpu_orde" ab-context="0" >
+					<input ng-model="vRow.idVPU_ORHE" class="hidden" />
+					<input ng-model="vRow.idVPU_ORST" class="hidden" />
+					<input ng-model="vRow.VPU_ORST_DELID" class="hidden" />
+					<input ng-model="vRow.idVIN_ITEM" class="hidden" />
+					<input ng-model="vRow.VPU_ORST_ORDQT" class="hidden" />
+					<input ng-model="vRow.VPU_ORDE_FACTO" class="hidden" />
+					<input ng-model="vRow.VPU_ORDE_OUNET" class="hidden" />
+					<input ng-model="vRow.EXTENSION" class="hidden" />
+					<input ng-model="vRow.percent" class="hidden" />
+					
+					<div ng-repeat="cItem in provCost" 
+					ab-formlist="invo_list"
+					ng-if="cItem.delId == vRow.VPU_ORST_DELID" >
+	
+						<input ng-model="cItem.delId" class="hidden" />
+						<input ng-model="cItem.ignore" class="hidden" />
+						<input ng-model="cItem.idVIN_ITEM" class="hidden" />
+						<input ng-model="cItem.VIN_ITEM_DESC1" class="hidden" />
+						<input ng-model="cItem.VPU_ORDE_FACTO" class="hidden" />
+						<input ng-model="cItem.amount" class="hidden" />
+						<input ng-model="cItem.orstId" class="hidden" />
+						<input ng-model="cItem.oltyp" class="hidden" />
+					</div>
+					
+				</form>
+				
 				</div>
-				<div ng-repeat="cItem in provCost" ng-if="cItem.delId == vRow.VPU_ORST_DELID" >
-
-					<input ng-model="cItem.delId" class="hidden" />
-					<input ng-model="cItem.idVIN_ITEM" class="hidden" />
-					<input ng-model="cItem.amount" class="hidden" />
-				</div>
-			
-
-			
-			</div>
 			</div>
 			
 			<table class="small">
@@ -298,7 +308,7 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 					</td>
 				</tr>
 			</table>	
-			</form>
+			
 		</div>
 	</div>
 
@@ -545,14 +555,74 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 							</span>
 						</td>
 						<td style="width:30%;" > Description </td>
-						<td style="width:20%;" class="text-right"> Amount</td>
-						<td style="width:30%;" ></td>
+						<td style="width:15%;" class="text-right"> Amount</td>
+						<td style="width:10%;" class="text-right"> Ignore</td>
+						<td style="width:25%;" ></td>
 						
 					</tr>
-					<tr ng-repeat="costItem in provCost" ng-if="costItem.delId == varRow.VPU_ORST_DELID" >
-						<td>{{costItem.VIN_ITEM_ITMID}}<input class="hidden" ng-model="costItem.idVIN_ITEM" size=5 /></td>
+					<tr ng-repeat="costItem in provCost" class="{{costItem.ignore==0?'':'text-muted'}}" ng-if="costItem.delId == varRow.VPU_ORST_DELID" >
+						<td>{{costItem.VIN_ITEM_ITMID}}
+						<input class="hidden" ng-model="costItem.idVIN_ITEM" size=5 />
+						<input ng-model="costItem.VPU_ORDE_FACTO" class="hidden" />
+						</td>
 						<td>{{costItem.VIN_ITEM_DESC1}}</td>
-						<td class="text-right"> <input class="text-right" ng-blur="costItem.amount = ABGetNumberFn('fmt-curr',costItem.amount)" ng-model="costItem.amount" size=5 /> </td>
+						<td class="text-right"> 
+							<input ng-if="costItem.orstId==0" class="text-right" ng-blur="costItem.amount = ABGetNumberFn('fmt-curr',costItem.amount)" ng-model="costItem.amount" size=5 /> 
+							<span ng-if="costItem.orstId!=0" >
+								${{ABGetNumberFn('fmt-curr',costItem.amount)}}
+							</span>
+						</td>
+						<td class="text-right">
+							<input ng-model="costItem.ignore" class="hidden" />
+							<span ng-click="costItem.ignore=1"
+							class="btn btn-sm btn-default ab-spaceless {{costItem.ignore==0?'':'hidden'}} " > 
+								&nbsp;<span ab-label="STD_NO" >No</span>&nbsp;
+							</span>
+							<span ng-click="costItem.ignore=0" 
+							class="btn btn-sm btn-default ab-spaceless {{costItem.ignore==1?'':'hidden'}} " >
+								&nbsp;<span ab-label="STD_YES" >Yes</span>&nbsp;
+							</span>
+						</td>
+						<td class="text-center">
+<table style="width:100%;" >
+<tr>
+<td style="width:30%;" class="ab-strong">
+		<ul class="nav  ab-spaceless " role="tablist"  ng-if="costItem.orstId==0"  >
+			<li class="dropdown ab-spaceless"  >
+				<span data-toggle="dropdown" class="text-primary btn-link" style="white-space:nowrap;padding:0px;" >
+					<span ng-if="costItem.oltyp=='EXP'" class="small ab-pointer ab-borderless" >Invoiced </span>
+					<span ng-if="costItem.oltyp=='BOR'" class="small ab-pointer ab-borderless" >Borned by {{ AB_CPARM.VGB_COMPANY.vgb_cust[0].VGB_CUST_BPNAM }}</span>
+					<span ng-if="costItem.orstId==0" class="caret" ></span>
+				</span>
+				<ul class="dropdown-menu ab-spaceless"  role="menu" ng-if="costItem.orstId==0" >
+					<li class="{{costItem.oltyp!='EXP'?'h2idden':''}}"  >
+					<a class="small"  ng-click="costItem.oltyp='EXP';" >
+					<span >Invoiced</span>
+					</a>
+					</li>
+					<li class="{{costItem.oltyp!='BOR'?'hi2dden':''}}"  >
+					<a class="small"  ng-click="costItem.oltyp='BOR';" >
+					<span >Borned by {{ AB_CPARM.VGB_COMPANY.vgb_cust[0].VGB_CUST_BPNAM }}</span>
+					</a>
+					</li>
+
+				</ul>
+			</li>
+		</ul>
+		<div ng-if="costItem.orstId>0"
+		<span class="{{costItem.oltyp!='EXP'?'hidden':''}}"  >
+			<span >Invoiced</span>
+		</span>
+		<span class="{{costItem.oltyp!='BOR'?'hidden':''}}"  >
+			<span >Borned by {{ AB_CPARM.VGB_COMPANY.vgb_cust[0].VGB_CUST_BPNAM }}</span>
+		</span>
+
+</td>	
+</tr>
+</table>
+						
+						
+						</td>
 					</tr>
 					</table>
 				</div>
@@ -567,7 +637,7 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 						<td class="text-right" > Distr.%</td>
 					</tr>
 					<tr ng-repeat="detRow in  rawResult.vpu_invoice | AB_noDoubles:'idVPU_ORHE,idVPU_ORDE,idVPU_ORST' " 
-						ng-if="detRow.VPU_ORST_DELID==varRow.VPU_ORST_DELID" >	
+						ng-if="detRow.VPU_ORST_DELID==varRow.VPU_ORST_DELID && detRow.VPU_ORDE_OLTYP == 'STD' " >	
 						<td>{{detRow.VIN_ITEM_ITMID}}</td>
 						<td>{{detRow.VIN_ITEM_DESC1}}</td>
 						<td class="text-right" >{{detRow.VPU_ORST_ORDQT}}</td>

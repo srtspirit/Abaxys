@@ -684,6 +684,69 @@
 		
 	}
 	
+	$scope.chkProfitMargin = function(orde)
+	{
+		
+		if (orde.VSL_ORDE_QUONU > 0 && $scope.pmarg_IgnQuote == true)
+		{
+			return;
+		}
+		
+		if (!$scope.vin_itmwar || $scope.vin_itmwar[0].VIN_ITMWAR_ITMID != orde.VSL_ORDE_ITMID)
+		{
+			var itmObj = new Object();
+			itmObj["VIN_ITMWAR_ITMID"] = orde.VSL_ORDE_ITMID;
+			itmObj["VIN_ITMWAR_WARID"] = orde.VSL_ORDE_WARID;
+			A_Scope.callBack = "$scope.chkProfitMarginAmt(" + orde.idVSL_ORDE + ");";
+			$scope.ABchk(itmObj,"vin_itmwar")
+		}
+		else
+		{
+			$scope.chkProfitMarginAmt(orde.idVSL_ORDE);
+		}
+			
+		console.log(showProps(orde,"VSL"))
+	}
+
+	$scope.chkProfitMarginAmt = function(ordeId)
+	{
+		var ounet = 0;
+		var rOcc = -1;
+		var occ = 0;
+		while (occ < $scope.vsl_orhe.length && rOcc < 0)
+		{
+			if ($scope.vsl_orhe[occ].idVSL_ORDE == ordeId)
+			{
+				$scope.vsl_orhe[occ].VSL_ORDE_COSTP = $scope.vin_itmwar[0].VIN_ITMWAR_AVGCP*1;
+				ounet = $scope.vsl_orhe[occ].VSL_ORDE_OUNET;
+				rOcc = occ;
+			}
+			occ += 1;
+		}
+		
+		var avCost = $scope.vin_itmwar[0].VIN_ITMWAR_AVGCP * 1;
+		var mProfit = $scope.AB_CPARM.VSL_CHECKS.PMARG / 100;
+		var gProfit = 0;
+		var cGood = ounet-avCost
+		var gProfit = cGood/ounet
+		
+		if (gProfit < mProfit)
+		{
+			$scope["pmarg"] = new Object
+			$scope["pmarg"].VSL_ORDE_ORLIN = $scope.vsl_orhe[rOcc].VSL_ORDE_ORLIN;
+			$scope["pmarg"].VIN_ITEM_ITMID = $scope.vsl_orhe[rOcc].VIN_ITEM_ITMID;
+			$scope["pmarg"].VIN_ITEM_DESCR = $scope.vsl_orhe[rOcc].VIN_ITEM_DESC1;
+			$scope["pmarg"].VSL_ORDE_OUNET = $scope.vsl_orhe[rOcc].VSL_ORDE_OUNET;
+			
+			$('[data-target="#myModalPmarg"]').click();
+		}
+		
+			
+		
+		console.log(ounet,$scope.vin_itmwar[0].VIN_ITMWAR_AVGCP*1)
+	}
+
+	
 	$scope.chkOrstQty = function(ordeId,orstId,orstSteps)
 	{
 

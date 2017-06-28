@@ -365,7 +365,7 @@ $hardCode =<<<EOC
 		<input class="hidden" ab-mpp="limit" value="0" />			
 		<input class="hidden" ng-click="idVIN_ITEM=VPU_ORDE_ITMID;ABlstAlias('idVIN_ITEM','idVIN_ITEM,vin_inveQuery','vin_inveQuery','vin_inve');" />
 	</div>
-	<div class="col-sm-6   {{vslFormPg==2?'':'invisible'}}" style="margin-left:5px;" >
+	<div class="col-sm-6 {{vslFormPg==2?'':'invisible'}}" style="margin-left:5px;" >
 		<div class="row well ab-spaceless " style="font-weight:900;border-color:RoyalBlue;padding-top:3px;padding-bottom:3px;" >
 			<div class="col-sm-3 text-left ab-spaceless " >
 				&nbsp;
@@ -406,7 +406,7 @@ $hardCode =<<<EOC
 									
 				        	&nbsp;&nbsp;
 				        	<span ng-if="stepRetract==true" class="glyphicon glyphicon-triangle-left text-danger " ></span>
-				        	{{step.labeltext}}
+				        	{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 				        	<span ng-if="stepRetract!=true" class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				       	</span>
 					
@@ -457,7 +457,7 @@ $hardCode =<<<EOC
 				style="white-space:nowrap;max-width:150px;padding:0px;">
 					
 					<span  >
-				        	&nbsp;&nbsp;{{step.labeltext}}
+				        	&nbsp;&nbsp;{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 				        	<span class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				        	#{{ docs.VPU_ORSI_GRPID }}
 				       	</span>
@@ -504,7 +504,7 @@ $hardCode =<<<EOC
 				style="white-space:nowrap;padding:0px;">
 					
 					<span  >
-				        	&nbsp;&nbsp;{{step.labeltext}}
+				        	&nbsp;&nbsp;{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 				        	<span class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				        	<span class="text-primary " >#{{ docs.VPU_ORSI_GRPID }}</span>&nbsp;{{docs.VPU_ORSI_CDATE.slice(0,10)}}&nbsp
 				       	</span>
@@ -2246,7 +2246,7 @@ $stepCode .= <<<EOC
       <a class="dropdown-toggle " data-toggle="dropdown" style="white-space:nowrap;width:150px;max-width:150px;padding:0px;">
 	<span class="ca2ret"></span>
 	<span  ng-repeat="step in VPU_STEP_LIST" ng-if="step.name==y.VPU_ORST_STEPS" >
-		{{step.labeltext}}
+		{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 	</span>
       	
       </a>
@@ -2775,7 +2775,7 @@ $stepCode .= <<<EOC
 					&nbsp;{{ invQ.VPU_ORST_ORDQT  }}&nbsp;
 
 					<span ng-repeat="stp in VPU_STEP_LIST" ng-if="stp.name == invQ.VPU_ORST_STEPS">
- 					{{stp.labeltext}} 
+ 					{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
  					</span>
 				</div>
 				

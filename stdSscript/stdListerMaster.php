@@ -3,15 +3,24 @@
 
 abstract class ListerMaster extends dbMaster
 	{	
-	    function __construct($schema)
+	    function __construct($inPost, $schema)
 	    {
+	    	$this->inPost = $inPost;
 	    	$this->schema = $schema;
 	        $this->count = "count"; //string constant
 			$this->id = "id"; //string constant
 			$this->maxLength = 5; //int constant
 			$this->name = "name"; //string constant
 			
-			$this->rootGroups = array("alphabet"); //root groups available for all masters
+			// AC 20170527 $this->rootGroups = array("alphabet"); //root groups available for all masters
+			if ($inPost["maxLength"])
+			{
+				$this->maxLength = $inPost["maxLength"];
+			}
+			$this->rootGroups = array();
+			$this->rootGroups[0]["name"] = "alphabet";
+			$this->rootGroups[0]["maxLength"] = $this->maxLength;
+			// AC 20170527 end
 	    }
 	    
 
@@ -41,7 +50,11 @@ abstract class ListerMaster extends dbMaster
 			
 			//get the quantity of elements in this group to check if we it's less than limit for showing them all in a screen
 			$tbls = new dbMaster($this->dataSource,$this->schema);
+			
 			$tbls->dbProcessTransactionPdo($queryCount);
+			// AC 20170528 $tbls->dbPdoPrep($queryCount,"",""); // AC 20170528; 
+
+
 			//$tbls->dbPdoPrep($query,$dta,$dtaType);
 			//echo($query);
 			
@@ -50,8 +63,9 @@ abstract class ListerMaster extends dbMaster
 			{
 				$query = $this->buildSelectIdQuery() . $this->paramQueryFromWhere;
 				$tbls = new dbMaster($this->dataSource,$this->schema);
-				$tbls->dbProcessTransactionPdo($query);
 				
+				// AC 20170528 $tbls->dbProcessTransactionPdo($query);
+				$tbls->dbPdoPrep($query,"",""); // AC 20170528; 
 				$this->assignResultToThis($tbls);
 				return ;
 			}
@@ -65,7 +79,7 @@ abstract class ListerMaster extends dbMaster
 		protected function buildSelectIdQuery()
 		{
 			$query = <<<EOC
-			SELECT 
+			SELECT (@aa:='RECSET') AS rtype,
 				{$this->idColumnName} as {$this->id}
 				,{$this->mainColumnName} as {$this->name} 
 EOC;
@@ -81,7 +95,8 @@ EOC;
 			$query = $this->buildSelectIdQuery() . $this->buildGroupQueryFromWhere($rootGroup, $group) . " AND " . $this->mainColumnName . " LIKE '" . $condition . "%'";
 			
 			$tbls = new dbMaster($this->dataSource,$this->schema);
-			$tbls->dbProcessTransactionPdo($query);
+			// AC 20170528 $tbls->dbProcessTransactionPdo($query);
+			$tbls->dbPdoPrep($query,"",""); // AC 20170528; 
 				
 			$this->assignResultToThis($tbls);
 		}
@@ -105,7 +120,7 @@ EOC;
 			}
 			
 			$query = <<<EOC
-						SELECT 
+						SELECT (@aa:='GROUPING') AS rtype,
 							{$groupingColumn} AS name
 							, count({$groupingColumn}) AS {$this->count} 
 						{$paramQueryFromWherequery}
@@ -114,8 +129,8 @@ EOC;
 EOC;
 					
 			$tbls = new dbMaster($this->dataSource,$this->schema);
-			$tbls->dbProcessTransactionPdo($query);
-			//$tbls->dbPdoPrep($query,$dta,$dtaType);
+			// AC 20170528 $tbls->dbProcessTransactionPdo($query);
+			$tbls->dbPdoPrep($query,"",""); // AC 20170528; 
 			
 			$this->table = $tbls; //debug
 			
@@ -150,8 +165,9 @@ EOC;
 	        $query = $this->buildQueryBasedOnRootGroup($rootGroup);
 	        
 	        $tbls = new dbMaster($this->dataSource,$this->schema);
-	        $tbls->dbProcessTransactionPdo($query);
-	        
+		// AC 20170528 $tbls->dbProcessTransactionPdo($query);
+		$tbls->dbPdoPrep($query,"",""); // AC 20170528; 
+	        $this->$query = $query;
 	        $this->assignResultToThis($tbls);
 	    }
 	    
@@ -166,16 +182,23 @@ EOC;
 		protected function buildQueryBasedOnRootGroup($rootGroup)
 		{
 			$this->searchColumnName = $this->rootGroupMapper[$rootGroup];
+			$where = "WHERE true [=COND:{$this->dataSource}=]";
+			if ($this->whereClause)
+			{
+				$where = $this->whereClause;	
+			}
+			
             $query = <<<EOC
-                SELECT {$this->searchColumnName} as {$this->searchColumnName}
-                        ,COUNT(*) as {$this->count}
+                SELECT (@aa:='ROOT') AS rtype, {$this->searchColumnName} as {$this->searchColumnName}
+                        ,COUNT(DISTINCT {$this->idColumnName} ) as {$this->count}
                 FROM {$this->dataSource}
+                {$this->joinSource}
+                {$where}
                 GROUP BY {$this->searchColumnName}
 EOC;
 			
-			//TODO: what are we passing as the first param?
-			//$tFnc = new AB_querySession;
-			//$query = $tFnc->tblAccessCond(???,$query,true,"onaccess,onaccess.USR");
+			$tFnc = new AB_querySession;
+			$query = $tFnc->tblAccessCond($this->inPost, $query, true, "onaccess,onaccess.USR");
 			return $query;
 		}
 		
@@ -187,14 +210,13 @@ EOC;
 			$this->searchColumnName = $this->rootGroupMapper[$rootGroup];
             $query = <<<EOC
                 
-                FROM {$this->dataSource} 
-                WHERE {$this->searchColumnName} = {$group}
+                FROM {$this->dataSource}  
+                WHERE {$this->searchColumnName} = {$group} [=COND:{$this->dataSource}=]
 EOC;
 
-			//condition: [=COND:$this->dataSource=]
-			//TODO: what are we passing as the first param?
-			//$tFnc = new AB_querySession;
-			//$query = $tFnc->tblAccessCond(???,$query,true,"onaccess,onaccess.USR");
+		
+			$tFnc = new AB_querySession;
+			$query = $tFnc->tblAccessCond($this->inPost, $query, true, "onaccess,onaccess.USR");
 			return $query;
 		}
 		
@@ -211,20 +233,85 @@ EOC;
 
 
 // Bgn hard code
-class ItemLister extends ListerMaster
+class xxItemLister extends ListerMaster
 {
-    function __construct($schema)
+    function __construct($inPost, $schema)
     {
-    	parent::__construct($schema);
+    	parent::__construct($inPost, $schema);
         $this->dataSource = "vin_item";
         $this->mainColumnName = "VIN_ITEM_ITMID";
         $this->idColumnName = "idVIN_ITEM";
+        // $this->maxLength = 5;
+        // To Andrey from Alain AC
+        // We need object type array
         
-        array_push($this->rootGroups, "ItemCategory", "ItemSupplyer");
+        
+        // AC 20170527 array_push($this->rootGroups, "ItemCategory", "ItemSupplyer");
+	$this->rootGroups[count($this->rootGroups)]["name"] = "ItemCategory";
+	$this->rootGroups[count($this->rootGroups)-1]["maxLength"] = $this->maxLength;
+	
+	$this->rootGroups[count($this->rootGroups)]["name"] = "ItemSupplyer";
+	$this->rootGroups[count($this->rootGroups)-1]["maxLength"] = $this->maxLength;
+	// AC 20170527 end
 		
 		$this->rootGroupMapper = array();
+		$this->rootGroupMapper["alphabet"] = "VIN_ITEM_ITMID";
 		$this->rootGroupMapper["ItemCategory"] = "VIN_ITEM_SEAR1";
+
+	
+	// $tblQuery = ListerMaster::createListerInstance($schema,$inPost);
+	
+	//$tblQuery->getListBasedOnGroup($inPost["group"], "2");
+	//$tblQuery->getListBasedOnGroup("ItemCategory", "3");
+	//$this->getRootGroups();
+	$this->getListBasedOnRootGroup("alphabet");
+	//$this->getListBasedOnGroup("ItemCategory", "1");
+
+
+
     }
 }
+class ItemLister extends ListerMaster
+{
+    function __construct($inPost, $schema)
+    {
+    	parent::__construct($inPost, $schema);
+        $this->dataSource = "vgb_cust";
+        // $this->joinSource = " join vgb_bpar on idVGB_BPAR = VGB_CUST_BPART ";
+        $this->mainColumnName = "VGB_CUST_BPNAM";
+        $this->idColumnName = "idVGB_CUST";
+        // $this->maxLength = 100;
+        // To Andrey from Alain AC
+        // We need object type array
+        
+        
+        // AC 20170527 array_push($this->rootGroups, "ItemCategory", "ItemSupplyer");
+	$this->rootGroups[count($this->rootGroups)]["name"] = "ItemCategory";
+	$this->rootGroups[count($this->rootGroups)-1]["maxLength"] = $this->maxLength;
+	
+	$this->rootGroups[count($this->rootGroups)]["name"] = "ItemSupplyer";
+	$this->rootGroups[count($this->rootGroups)-1]["maxLength"] = $this->maxLength;
+	// AC 20170527 end
+		
+		$this->rootGroupMapper = array();
+		$this->rootGroupMapper["alphabet"] = "VGB_CUST_BPNAM";
+		$this->rootGroupMapper["ItemCategory"] = "VGB_CUST_SLSRP";
+		
+
+	
+	// $tblQuery = ListerMaster::createListerInstance($schema,$inPost);
+	
+	//$tblQuery->getListBasedOnGroup($inPost["group"], "2");
+	//$tblQuery->getListBasedOnGroup("ItemCategory", "3");
+	// $this->getRootGroups();
+	$this->getListBasedOnRootGroup("ItemCategory");
+	// $this->getListBasedOnGroup("alphabet", "1");
+
+
+
+    }
+}
+
+
 // end hard code	
 ?>

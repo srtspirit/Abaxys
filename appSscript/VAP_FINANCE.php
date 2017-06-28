@@ -38,12 +38,15 @@ class vap_purch extends dbMaster
 			}
 
 		}
+
+// ((vpu.VPU_ORDE_OUNET_REV*1) * (vpu.VPU_ORST_ORDQT_REV*1) / (vpu.VPU_ORDE_FACTO*1)).toFixed(2)
 		
 		$this->localWhere = $localWhere;
 		
 
 $trig = <<<EOD
-			SELECT * FROM
+			SELECT *,
+			(@aa:= ROUND(VPU_ORDE_OUNET * VPU_ORST_ORDQT / GREATEST(VPU_ORDE_FACTO,1),2)) as EXTENTION  FROM
 			 
 		 	( SELECT * FROM vap_oihe 
 
@@ -231,12 +234,14 @@ class vap_oihe_items extends dbMaster
 $trig = <<<EOD
 			SELECT * FROM
 			 
-		 	( SELECT * FROM vgb_bpar 
+		 	( SELECT *  FROM vgb_bpar 
 
 			
 			
 			LEFT JOIN vgb_supp ON VGB_SUPP_BPART = idVGB_BPAR [=COND:vgb_supp=]
 			LEFT JOIN vap_oihe ON VAP_OIHE_BSUPP = idVGB_SUPP [=COND:vap_oihe=]
+			LEFT JOIN vap_oihe_itm ON VAP_OIHE_ITM_OITID = idVAP_OIHE [=COND:vap_oihe_itm=]
+			LEFT JOIN vin_item ON VAP_OIHE_ITM_ITMID = idVIN_ITEM [=COND:vin_item=]
 			LEFT JOIN vgl_jnhe ON idVGL_JNHE = VAP_OIHE_TRNID [=COND:vgl_jnhe=]			
 			LEFT JOIN vap_oide ON idVAP_OIHE = VAP_OIDE_OITID [=COND:vap_oide=]			
 			
@@ -1452,6 +1457,7 @@ class vap_oihe extends dbMaster
 		$this->ePost["VAP_OIHE_USLNA"] = $dtaObj["VAP_OIHE_USLNA"];
 		$this->ePost["VAP_BOOKING"] = $dtaObj["VAP_BOOKING"];
 		
+		$this->postingDetail = array();
 		
 		$this->rSet = array();
 		$recs = $dtaObj["RECSET"];
@@ -1491,10 +1497,13 @@ class vap_oihe extends dbMaster
 							
 							$this->rSet[$xocc]["VREC"][$vrecCount]["newItem"] = $subRec[$wocc]["newItem"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["idVIN_ITEM"] = $subRec[$wocc]["idVIN_ITEM"];
+							$this->rSet[$xocc]["VREC"][$vrecCount]["VPU_ORDE_DESCR"] = $subRec[$wocc]["VPU_ORDE_DESCR"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["VIN_ITEM_INVIT"] = $subRec[$wocc]["VIN_ITEM_INVIT"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["VPU_ORST_ORDQT"] = $subRec[$wocc]["VPU_ORST_ORDQT_REV"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["VPU_ORDE_OUNET"] = $subRec[$wocc]["VPU_ORDE_OUNET_REV"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["ext"] = $subRec[$wocc]["ext"];
+							$this->rSet[$xocc]["VREC"][$vrecCount]["VPU_ORST_ORDQT_ORG"] = $subRec[$wocc]["VPU_ORST_ORDQT_ORG"];
+							$this->rSet[$xocc]["VREC"][$vrecCount]["VPU_ORDE_OUNET_ORG"] = $subRec[$wocc]["VPU_ORDE_OUNET_ORG"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["ext_ORG"] = $subRec[$wocc]["ext_ORG"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["VIN_ITEM_ITTXT"] = $subRec[$wocc]["VIN_ITEM_ITTXT"];
 							$this->rSet[$xocc]["VREC"][$vrecCount]["VPU_ORDE_OLTYP"] = $subRec[$wocc]["VPU_ORDE_OLTYP"];
@@ -1578,7 +1587,7 @@ class vap_oihe extends dbMaster
 		}
 		else
 		{
-			$E_POST["VAP_OIHE_BPBNK"] ="8";
+			$E_POST["VAP_OIHE_BPBNK"] = "8"; // REM AC 20170615 What is 8 = Partner Bank ID
 			unset($E_POST["idVAP_OIHE"]);
 			unset($E_POST["VAP_OIHE_BPBNK"]);
 			unset($E_POST["VAP_OIHE_PMTDA"]);
@@ -1674,12 +1683,92 @@ class vap_oihe extends dbMaster
 					$this->errorCodeText[count($this->errorCodeText)] = "vap_oihe:" . " Could not insert " ;
 				}
 			}
+			
+			
+		  	if ($this->ePost["VAP_BOOKING"] == "1")
+		  	{
+
+				$bookSet = $this->rSet;
+				$occ = 0;
+				while ($occ <  count($bookSet) && $externCall == false && $this->errorCode == 0)
+				{
+		 			if ($bookSet[$occ]["NEWPOST"] == "0" && $this->masterTranConn != 0)
+		 			{
+		 				$updObj = array();
+		 				$updObj["PROCESS"] = $this->localE_POST["PROCESS"];
+						$updObj["SESSION"] = $this->localE_POST["SESSION"];				
+		 				$updObj["idVAP_OIHE"] = $bookSet[$occ]["idVAP_OIHE"];
+		 				$updObj["VAP_OIHE_BOOKID"] = $insertId;
+			 			$wTblvap_oihe = new dbMaster("vap_oihe",$this->tblInfo->schema);
+			 			$wTblvap_oihe->brTrConn = $this->masterTranConn;
+			 			$wTblvap_oihe->dbUpdRec($updObj);
+			 		}
+			 		$occ += 1;
+			 	}
+			}
+ 						
+			
 	 	}
 	
 		$this->repairedE_POST = $E_POST;
 		$this->E_RECSET = $E_POST["RECSET"];
+
+		if ($this->errorCode == 0 && $dtaObj["VAP_DISTRIBUTE"] == "1")
+		{
+			$newRec = array();
+			$newRec["idVAP_OIHE"] = $insertId;
+			$newRec["VAP_OIHE_DOCDA"] = $dtaObj["VAP_OIHE_DOCDA"];
+			$newRec["SELECT"] = '1';
+			$newRec["ADJAMOUT"] = $E_POST["VAP_OIHE_AMUNT"];
+			$newRec["VAP_OIHE_TRNID"] = $vgl_trans->insertId;
+			$newRec["VAP_OIHE_OITTY"] = 'PMT';
+			$newRec["VAP_OIHE_AMUNT"] = $E_POST["VAP_OIHE_AMUNT"];
+			$newRec["VAP_OIHE_BALAN"] = $E_POST["VAP_OIHE_AMUNT"]; 
+			$dtaObj["RECSET"][count($dtaObj["RECSET"])] = $newRec;
+			$this->dbUpdRec($dtaObj);
+		}		
 		
+		if ($this->postingDetail && count($this->postingDetail)>0)
+		{
+			$this->rpoUpd = array();
+			$occ = 0;
+			while ($occ <  count($this->postingDetail))
+			{
+				$newRec = array();
+				$newRec["PROCESS"] = $dtaObj["PROCESS"];
+				$newRec["SESSION"] = $dtaObj["SESSION"];
+				if($this->ePost["VAP_BOOKING"] == "1")
+				{
+					$newRec["VAP_OIHE_ITM_OITID"] = $this->postingDetail[$occ]["idVAP_OIHE"];
+				}
+				else
+				{
+					$newRec["VAP_OIHE_ITM_OITID"] = $insertId;
+				}
+				
+
+				$newRec["VAP_OIHE_ITM_ITMID"] = $this->postingDetail[$occ]["idVIN_ITEM"];
+				$newRec["VAP_OIHE_ITM_DESCR"] = $this->postingDetail[$occ]["VPU_ORDE_DESCR"];
+				$newRec["VAP_OIHE_ITM_ORDQT"] = $this->postingDetail[$occ]["VPU_ORST_ORDQT"];
+				$newRec["VAP_OIHE_ITM_OUNET"] = $this->postingDetail[$occ]["VPU_ORDE_OUNET"];
+				$newRec["VAP_OIHE_ITM_EXTEN"] = $this->postingDetail[$occ]["ext"];
+
+				$newRec["VAP_OIHE_ITM_ORDQT_ORG"] = $this->postingDetail[$occ]["VPU_ORST_ORDQT_ORG"];
+				$newRec["VAP_OIHE_ITM_OUNET_ORG"] = $this->postingDetail[$occ]["VPU_ORDE_OUNET_ORG"];
+				$newRec["VAP_OIHE_ITM_EXTEN_ORG"] = $this->postingDetail[$occ]["ext_ORG"];
+				
+	 			$wTblrpo_oihe = new dbMaster("vap_oihe_itm",$this->tblInfo->schema);
+	 			$wTblrpo_oihe->brTrConn = $this->masterTranConn;
+	 			$wTblrpo_oihe->dbInsRec($newRec);				
+	 			$this->rpoUpd[count($this->rpoUpd)] = $wTblrpo_oihe;
+
+
+				
+				$occ += 1;
+			}
+		}
 		
+		// $this->errorCode = 11;
 		
 		if ($externCall == false)
 		{
@@ -1695,20 +1784,7 @@ class vap_oihe extends dbMaster
 			}	
 		}
 
-		if ($this->errorCode == 0 && $dtaObj["VAP_DISTRIBUTE"] == "1")
-		{
-			$newRec = array();
-			$newRec["idVAP_OIHE"] = $insertId;
-			$newRec["VAP_OIHE_DOCDA"] = $dtaObj["VAP_OIHE_DOCDA"];
-			$newRec["SELECT"] = '1';
-			$newRec["ADJAMOUT"] = $E_POST["VAP_OIHE_AMUNT"];
-			$newRec["VAP_OIHE_TRNID"] = $vgl_trans->insertId;
-			$newRec["VAP_OIHE_OITTY"] = 'PMT';
-			$newRec["VAP_OIHE_AMUNT"] = $E_POST["VAP_OIHE_AMUNT"];
-			$newRec["VAP_OIHE_BALAN"] = $E_POST["VAP_OIHE_AMUNT"]; 
-			$dtaObj["RECSET"][count($dtaObj["RECSET"])] = $newRec;
-			$this->dbUpdRec($dtaObj);
-		}
+
  		
 	}
 	
@@ -1718,12 +1794,14 @@ class vap_oihe extends dbMaster
 		// $this->ePost
 		
 		
+		
 		$recSet = $this->rSet;
 		$paccAccount = array();
 		$paccAccount[0]["VGL_JNHE_PSOUR"] = "VAP_INV";
 		$paccAccount[0]["PURCH_PAYABLE"] = 0;
 	 	$paccAccount[0]["PURCH_EXPENSE"] = 0;
 	 	$paccAccount[0]["EXPENSE_REIM"] = 0;
+	 	$paccAccount[0]["VARIANCE"] = 0;
 	  	$paccAccount[0]["COST_SALES"] = 0;
 	  	$paccAccount[0]["PROV_EXPENSE"] = 0;
 	  	$paccAccount[0]["INVENTORY"] = 0;
@@ -1735,6 +1813,7 @@ class vap_oihe extends dbMaster
 			$paccAccount[1]["PURCH_PAYABLE"] = 0;
 		 	$paccAccount[1]["PURCH_EXPENSE"] = 0;
 		 	$paccAccount[1]["EXPENSE_REIM"] = 0;
+		 	$paccAccount[1]["VARIANCE"] = 0;
 		  	$paccAccount[1]["COST_SALES"] = 0;
 		  	$paccAccount[1]["PROV_EXPENSE"] = 0;
 		  	$paccAccount[1]["INVENTORY"] = 0;
@@ -1750,6 +1829,10 @@ class vap_oihe extends dbMaster
 		$EXPENSE_REIM[0] = 0;
 		$EXPENSE_REIM[1] = 0;
 			
+		$VARIANCE = array();
+		$VARIANCE[0] = 0;
+		$VARIANCE[1] = 0;
+
 		$INVENTORY = array();
 		$INVENTORY[0] = 0;
 		$INVENTORY[1] = 0;
@@ -1791,7 +1874,8 @@ class vap_oihe extends dbMaster
 	  		$wocc = 0;
 		  	while ($wocc < count($recSet[$occ]["VREC"]))
 		  	{
-		  			
+		  		$recSet[$occ]["VREC"][$wocc]["idVAP_OIHE"] = $recSet[$occ]["idVAP_OIHE"];
+		  		$this->postingDetail[count($this->postingDetail)] = $recSet[$occ]["VREC"][$wocc];
 		  		if ($recSet[$occ]["VREC"][$wocc]["VIN_ITEM_ITTXT"] != "NOTAX")
 		  		{
 		  			$taxable[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
@@ -1800,6 +1884,8 @@ class vap_oihe extends dbMaster
 		  				$taxable[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*1);
 		  			}
 		  		}
+		  		
+		  		
 		  		if ($recSet[$occ]["VREC"][$wocc]["VPU_ORDE_OLTYP"] == "STD" || $recSet[$occ]["VREC"][$wocc]["VPU_ORDE_OLTYP"] == "EXP" )
 		  		{
 		  			$PURCH_PAYABLE[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
@@ -1810,18 +1896,43 @@ class vap_oihe extends dbMaster
 		  		}
 		  		if ($recSet[$occ]["VREC"][$wocc]["VPU_ORDE_OLTYP"] == "STD" )
 		  		{
-		  			$INVENTORY[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+		  			if ($this->ePost["VAP_BOOKING"]=="1")
+		  			{
+			  			$VARIANCE[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+			  		}
+			  		else
+			  		{
+			  			$INVENTORY[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+			  		}
+		  			
 		  			if ($this->ePost["VAP_BOOKING"]=="1" && $recSet[$occ]["VREC"][$wocc]["newItem"]!="1")
 		  			{
-		  				$INVENTORY[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*-1);
+		  				// $INVENTORY[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*-1);
+		  				$VARIANCE[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*-1);
 		  			}
 		  		}		  		
 		  		if ($recSet[$occ]["VREC"][$wocc]["VPU_ORDE_OLTYP"] == "EXP" )
 		  		{
-		  			$EXPENSE_REIM[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+		  			if ($this->ePost["VAP_BOOKING"]=="1")
+		  			{
+		  				if ($recSet[$occ]["VREC"][$wocc]["newItem"]!="1")
+		  				{
+				  			$VARIANCE[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+				  		}
+				  		else
+				  		{
+				  			$EXPENSE_REIM[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+				  		}
+			  		}
+			  		else
+			  		{
+			  			$EXPENSE_REIM[0] += ($recSet[$occ]["VREC"][$wocc]["ext"]*1);
+			  		}
+			  			
 		  			if ($this->ePost["VAP_BOOKING"]=="1" && $recSet[$occ]["VREC"][$wocc]["newItem"]!="1")
 		  			{
-		  				$EXPENSE_REIM[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*-1);
+		  				$VARIANCE[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*-1);
+		  				// $EXPENSE_REIM[1] += ($recSet[$occ]["VREC"][$wocc]["ext_ORG"]*-1);
 		  			}
 		  		}
 		  				  		
@@ -1865,13 +1976,16 @@ class vap_oihe extends dbMaster
 			  	
 			}
 			
-
 		  	
 	  		$occ += 1;
 	  	}
 	  	
+	  	// Taxes have been removed from RPO-Locin Invoice detail because it cannot be linked 
+		// $this->postingDetail[count($this->postingDetail)] = $TAXES[0];	  	
+	  	
 		$paccAccount[0]["PURCH_PAYABLE"] = $PURCH_PAYABLE[0];
 	 	$paccAccount[0]["EXPENSE_REIM"] = $EXPENSE_REIM[0];
+	 	$paccAccount[0]["VARIANCE"] = $VARIANCE[0];
 	  	$paccAccount[0]["INVENTORY"] = $INVENTORY[0];
 	  	
 	  	
@@ -1886,6 +2000,7 @@ class vap_oihe extends dbMaster
   		{
 			$paccAccount[1]["PURCH_PAYABLE"] = $PURCH_PAYABLE[1];
 		 	$paccAccount[1]["EXPENSE_REIM"] = $EXPENSE_REIM[1];
+		 	$paccAccount[1]["VARIANCE"] = $VARIANCE[1];
 		  	$paccAccount[1]["INVENTORY"] = $INVENTORY[1];
 		  	$tax = array();
 			foreach($TAXES[1] as $name => $value)
@@ -1934,14 +2049,20 @@ class vap_oihe extends dbMaster
 			$currency["VGB_CURR_CURAT"] = $wTblCurrency->result[0]["VGB_CURR_CURAT"];
 		}
 		
-		$this->dbMasterTransac();
-		$this->errorCodeText = array();
-		if ($this->transactionError > 0)
+		$externCall = true;
+		if (!$this->masterTranConn)
 		{
-			$this->errorCode = 9300;
-			$this->errorCodeText[count($this->errorCodeText)] = "Transaction failed ";
-			$this->errorCodeText[count($this->errorCodeText)] = "Could not connect ";
-			return;
+			$externCall = false;		
+		
+			$this->dbMasterTransac();
+			$this->errorCodeText = array();
+			if ($this->transactionError > 0)
+			{
+				$this->errorCode = 9300;
+				$this->errorCodeText[count($this->errorCodeText)] = "Transaction failed ";
+				$this->errorCodeText[count($this->errorCodeText)] = "Could not connect ";
+				return;
+			}
 		}
 
 		// AC 20161218 New Control Number for Adjustments
@@ -1966,8 +2087,9 @@ class vap_oihe extends dbMaster
 				$dbCount = count($wTblArr);
 				$dbObj["idVAP_OIHE"] = $recSet[$occ]["idVAP_OIHE"];
 				$wTblArr[$dbCount] = new dbMaster("vap_oihe",$this->tblInfo->schema);
-				
+				$wTblArr[$dbCount]->brTrConn = $this->masterTranConn;
 				$wTblArr[$dbCount]->dbFindMatch($dbObj);
+				$wTblArr[$dbCount]->brTrConn = null;
 				if (!$wTblArr[$dbCount]->result[0]["VAP_OIHE_BALAN"] 
 					|| abs($wTblArr[$dbCount]->result[0]["VAP_OIHE_BALAN"] ) < abs($recSet[$occ]["ADJAMOUT"])
 					|| abs($wTblArr[$dbCount]->result[0]["VAP_OIHE_BALAN"] * $recSet[$occ]["ADJAMOUT"]) <= 0)
@@ -2029,17 +2151,20 @@ class vap_oihe extends dbMaster
 		}
 		$this->dbFnct = "dbUpdRec";
 		
-		if ($this->errorCode == 0 )
-		{		
-			$this->dbPdoEndTransac(true);
+		if ($externCall == false)
+		{
+			if ($this->errorCode == 0 )
+			{		
+				$this->dbPdoEndTransac(true);
+			}
+			else
+			{	
+				$this->errorCode =+ 3001;	
+				$this->dbPdoEndTransac(false);
+				$this->errorCodeText[count($this->errorCodeText)] = "Update Transaction Aborted ";
+			}	
 		}
-		else
-		{	
-			$this->errorCode =+ 3001;	
-			$this->dbPdoEndTransac(false);
-			$this->errorCodeText[count($this->errorCodeText)] = "Update Transaction Aborted ";
-		}	
-
+	
 		
 		$this->applyTrans = $wTblArr;
 		
@@ -2143,6 +2268,300 @@ class vap_financial extends dbMaster
 }
 
 
+class vap_agedreport extends dbMaster
+{
+	function vap_agedreport($schema)
+	{
+		$this->dbMaster("vap_oihe",$schema);
+	}
+	
+	function dbFindMatch($objDta)
+	{
+		$this->localdbFnct = "Produre aged report";
+		$this->localE_POST = $objDta;
+			
+		$trig = $this->buildTrigger($objDta);
+		
+		$tFnc = new AB_querySession;
+		$trig = $tFnc->tblAccessCond($objDta,$trig,true,"onaccess,onaccess.USR");
+		
+		$dta = array();
+		$dtaType = array();
+		
+		$dta["agingDate"] = $objDta["agingDate"];
+		$dtaType["agingDate"] = PDO::PARAM_STR;
+		
+			
+		
+	  	$ageTbls = new dbMaster("vap_oihe",$this->tblInfo->schema);
+		//$ageTbls->dbProcessTransactionPdo($trig);
+		$ageTbls->dbPdoPrep($trig,$dta,$dtaType);		
+
+		foreach($ageTbls as $name => $value)
+		{
+			 $this->$name = $value;
+		}		
+
+		$trig = $this->buildTotalTrigger($objDta);
+		
+		$tFnc = new AB_querySession;
+		$trig = $tFnc->tblAccessCond($objDta,$trig,true,"onaccess,onaccess.USR");
+		
+		$dta = array();
+		$dtaType = array();
+		
+		$dta["agingDate"] = $objDta["agingDate"];
+		$dtaType["agingDate"] = PDO::PARAM_STR;
+		
+			
+		
+	  	$ageTbls = new dbMaster("vap_oihe",$this->tblInfo->schema);
+		//$ageTbls->dbProcessTransactionPdo($trig);
+		$ageTbls->dbPdoPrep($trig,$dta,$dtaType);		
+		
+		$occ = 0;
+		while ($occ < count($ageTbls->result))
+		{
+			$this->result[count($this->result)] = $ageTbls->result[$occ];
+			$occ +=1;
+		}
+
+		
+	}
+	
+	function buildTrigger($objDta)
+	{
+	
+		if (count($objDta["suppFilter"]) > 0)
+		{
+			$supp = " AND '," . implode(",",$objDta["suppFilter"]) . ",' ";
+			$supp .= "LIKE CONCAT('%,',idVGB_SUPP,',%') ";
+		}
+		$trig =<<<EOC
+		
+SELECT
+		VGB_SUPP_BPNAM
+		,idVGB_SUPP
+		,VGB_CURR_DESCR
+		,0 as invoice
+		,0 as invDate
+		,MAX(VGB_CURR_CURID) as currency
+        ,SUM(balance) as totalDebt
+        ,SUM(thirty) as total30
+        ,SUM(sixty) as total60
+        ,SUM(ninety) as total90
+        ,SUM(oneTwenty) as total120
+        ,SUM(old) as totalOld
+FROM
+	(SELECT
+		VGB_SUPP_BPNAM
+		,idVGB_SUPP
+		,VGB_CURR_DESCR
+		,invoice
+		,VAP_OIHE_DOCDA
+		,balance
+		,VGB_CURR_CURID
+		,CASE
+			WHEN :agingDate - interval 30 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS thirty
+		,CASE
+			WHEN :agingDate - interval 30 day > VAP_OIHE_DOCDA AND :agingDate - interval 60 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS sixty
+		,CASE
+			WHEN :agingDate - interval 60 day > VAP_OIHE_DOCDA AND :agingDate - interval 90 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS ninety
+		,CASE
+			WHEN :agingDate - interval 90 day > VAP_OIHE_DOCDA AND :agingDate - interval 120 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS oneTwenty
+		,CASE
+			WHEN :agingDate - interval 120 day > VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS old
+	FROM
+		(SELECT
+			VGB_SUPP_BPNAM
+			,idVGB_SUPP
+			,VGB_CURR_DESCR
+			,VAP_OIHE_INVOI AS invoice
+			,VAP_OIHE_DOCDA
+			,CASE
+				WHEN VAP_OIDE_AMUNT IS NULL THEN VAP_OIHE_AMUNT
+				ELSE (MAX(VAP_OIHE_AMUNT) + SUM(VAP_OIDE_AMUNT))
+			END AS balance
+			,VGB_CURR_CURID
+		
+		FROM vap_oihe
+		LEFT JOIN vap_oide ON VAP_OIDE_OITID = idVAP_OIHE [=COND:vap_oide=]
+		JOIN vgb_supp ON idVGB_SUPP = VAP_OIHE_BSUPP [=COND:vgb_supp=]
+		JOIN vgb_curr ON idVGB_CURR = VAP_OIHE_CURID
+		WHERE  VAP_OIHE_DOCDA < :agingDate AND VAP_OIHE_TRTYP = 'STD'
+			{$supp}
+			AND (VAP_OIDE_TRNDA < :agingDate OR VAP_OIDE_TRNDA IS NULL)  [=COND:vap_oihe=]
+			
+			
+ 
+
+		GROUP BY VAP_OIHE_BSUPP, idVAP_OIHE
+		HAVING balance != 0) x
+	) y
+	GROUP BY VGB_SUPP_BPNAM
+    
+UNION
+    
+SELECT  
+		VGB_SUPP_BPNAM
+		,idVGB_SUPP
+		,VGB_CURR_DESCR
+		,invoice
+		,VAP_OIHE_DOCDA as invDate
+		,VGB_CURR_CURID as currency
+		,0 as balance
+		,CASE
+			WHEN :agingDate - interval 30 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS thirty
+		,CASE
+			WHEN :agingDate - interval 30 day > VAP_OIHE_DOCDA AND :agingDate - interval 60 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS sixty
+		,CASE
+			WHEN :agingDate - interval 60 day > VAP_OIHE_DOCDA AND :agingDate - interval 90 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS ninety
+		,CASE
+			WHEN :agingDate - interval 90 day > VAP_OIHE_DOCDA AND :agingDate - interval 120 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS oneTwenty
+		,CASE
+			WHEN :agingDate - interval 120 day > VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS old
+FROM
+	(SELECT 
+		VGB_SUPP_BPNAM
+		,idVGB_SUPP
+		,VGB_CURR_DESCR
+		,VAP_OIHE_INVOI AS invoice
+		,VAP_OIHE_DOCDA
+		,CASE
+			WHEN VAP_OIDE_AMUNT IS NULL THEN VAP_OIHE_AMUNT
+			ELSE (MAX(VAP_OIHE_AMUNT) + SUM(VAP_OIDE_AMUNT))
+		END AS balance
+		,VGB_CURR_CURID
+		
+	FROM vap_oihe
+	LEFT JOIN vap_oide ON VAP_OIDE_OITID = idVAP_OIHE [=COND:vap_oide=]
+    JOIN vgb_supp ON idVGB_SUPP = VAP_OIHE_BSUPP [=COND:vgb_supp=]
+	JOIN vgb_curr ON idVGB_CURR = VAP_OIHE_CURID
+	WHERE VAP_OIHE_DOCDA < :agingDate AND VAP_OIHE_TRTYP = 'STD'
+		{$supp}
+		AND (VAP_OIDE_TRNDA < :agingDate OR VAP_OIDE_TRNDA IS NULL) [=COND:vap_oihe=]
+	GROUP BY VAP_OIHE_BSUPP, idVAP_OIHE
+	HAVING balance != 0) x
+ORDER BY VGB_SUPP_BPNAM, invoice;
+
+
+	
+EOC;
+
+		return $trig;
+	}
+	
+	function buildTotalTrigger($objDta)
+	{
+	
+		if (count($objDta["suppFilter"]) > 0)
+		{
+			$supp = " AND '," . implode(",",$objDta["suppFilter"]) . ",' ";
+			$supp .= "LIKE CONCAT('%,',idVGB_SUPP,',%') ";
+		}
+		$trig =<<<EOC
+		
+SELECT
+		VGB_CURR_CURID as VGB_SUPP_BPNAM
+		,(@ab:=0) as idVGB_SUPP
+		,VGB_CURR_DESCR
+		,0 as invoice
+		,0 as invDate
+		,MAX(VGB_CURR_CURID) as currency
+        ,SUM(balance) as totalDebt
+        ,SUM(thirty) as total30
+        ,SUM(sixty) as total60
+        ,SUM(ninety) as total90
+        ,SUM(oneTwenty) as total120
+        ,SUM(old) as totalOld
+FROM
+	(SELECT
+		(@aa:='rpt_total') as VGB_SUPP_BPNAM
+		,idVGB_SUPP
+		,VGB_CURR_DESCR
+		,invoice
+		,VAP_OIHE_DOCDA
+		,balance
+		,VGB_CURR_CURID
+		,CASE
+			WHEN :agingDate - interval 30 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS thirty
+		,CASE
+			WHEN :agingDate - interval 30 day > VAP_OIHE_DOCDA AND :agingDate - interval 60 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS sixty
+		,CASE
+			WHEN :agingDate - interval 60 day > VAP_OIHE_DOCDA AND :agingDate - interval 90 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS ninety
+		,CASE
+			WHEN :agingDate - interval 90 day > VAP_OIHE_DOCDA AND :agingDate - interval 120 day <= VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS oneTwenty
+		,CASE
+			WHEN :agingDate - interval 120 day > VAP_OIHE_DOCDA THEN balance
+			ELSE 0
+		END AS old
+	FROM
+		(SELECT
+			(@aa:='rpt_total') as VGB_SUPP_BPNAM
+			,idVGB_SUPP
+			,VGB_CURR_DESCR
+			,VAP_OIHE_INVOI AS invoice
+			,VAP_OIHE_DOCDA
+			,CASE
+				WHEN VAP_OIDE_AMUNT IS NULL THEN VAP_OIHE_AMUNT
+				ELSE (MAX(VAP_OIHE_AMUNT) + SUM(VAP_OIDE_AMUNT))
+			END AS balance
+			,VGB_CURR_CURID
+		
+		FROM vap_oihe
+		LEFT JOIN vap_oide ON VAP_OIDE_OITID = idVAP_OIHE [=COND:vap_oide=]
+		JOIN vgb_supp ON idVGB_SUPP = VAP_OIHE_BSUPP [=COND:vgb_supp=]
+		JOIN vgb_curr ON idVGB_CURR = VAP_OIHE_CURID
+		WHERE  VAP_OIHE_DOCDA < :agingDate AND VAP_OIHE_TRTYP = 'STD'
+			{$supp}
+			AND (VAP_OIDE_TRNDA < :agingDate OR VAP_OIDE_TRNDA IS NULL)  [=COND:vap_oihe=]
+			
+			
+ 
+
+		GROUP BY VAP_OIHE_BSUPP, idVAP_OIHE
+		HAVING balance != 0) x
+	) 
+	GROUP BY VGB_SUPP_BPNAM,VGB_CURR_CURID
+
+EOC;
+
+		return $trig;
+	}
+		
+	
+}
+
+
+
 
 require_once "VGB_PARTNERS.php";
 require_once "VGB_GETNFNU.php";
@@ -2151,3 +2570,4 @@ require_once "VIN_ITEMS.php";
 
 
 ?>
+

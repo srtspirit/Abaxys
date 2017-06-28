@@ -90,6 +90,16 @@ require_once "../appCscript/VSL_ORDERS.php";
 require_once "../stdSscript/stdSessionVarQuery.php" ;
 ?>
 
+
+
+
+
+
+
+
+
+
+
 <?php
 
 $orderAddressDisplay = <<<EOB
@@ -249,6 +259,48 @@ else
 			<div class="col-lg-12 ab-spaceless" id="orheFormButtons" >
 				<?php require_once "../stdCscript/stdFormButtons.php"; ?>
 			</div>
+
+<div class="col-lg-12 ab-spaceless" id="orheFormButtons" >
+	<span class="hidden" data-toggle="modal" data-target="#myModalPmarg"  >ClickIt</span>
+	<div id="myModalPmarg" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+	
+			<div class="modal-content" >
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">
+						<span ab-label="STD_MARGIN" >Profit Margin</span>
+						<span ab-label="STD_BELOW" class="ab-strong" >under</span>
+					</h4>
+					<label ab-label="LF_PMETH_QUOTED" ></label>
+					<label ab-label="STD_IGNORED" ></label>
+					<input type="checkbox" ng-model="pmarg_IgnQuote" />
+				</div>
+				<div class="modal-body">
+					<table style="width:100%;" >
+						<tr class="text-primary ab-strong" >
+							<td ab-label="STD_LINE_NUMBER"></td>
+							<td ab-label="VIN_ITEM_ITMID"></td>
+							<td ab-label="STD_DESCR"></td>
+							<td ab-label="VIN_BPIT_SELLP"></td>
+						</tr>
+						<tr>
+							<td>{{pmarg.VSL_ORDE_ORLIN}}</td>
+							<td>{{pmarg.VIN_ITEM_ITMID}}</td>
+							<td>{{pmarg.VIN_ITEM_DESCR}}</td>
+							<td>{{pmarg.VSL_ORDE_OUNET}}</td>
+						</tr>
+					</table>
+							        
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+	
+		</div>
+	</div>
+</div>
 			<div class="col-lg-12">
 				<div class="row vslFormPg1 hidden ab-strong" >
 					<div class="col-lg-2  well ab-spaceless ">
@@ -379,7 +431,7 @@ $hardCode =<<<EOC
 									
 				        	&nbsp;&nbsp;
 				        	<span ng-if="stepRetract==true" class="glyphicon glyphicon-triangle-left text-danger " ></span>
-				        	{{step.labeltext}}
+				        	{{ AB_CPARM.VSL_STEPS_DESCR[step.name] }}
 				        	<span ng-if="stepRetract!=true" class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				       	</span>
 					
@@ -430,7 +482,7 @@ $hardCode =<<<EOC
 				style="white-space:nowrap;max-width:150px;padding:0px;">
 					
 					<span  >
-				        	&nbsp;&nbsp;{{step.labeltext}}
+				        	&nbsp;&nbsp;{{ AB_CPARM.VSL_STEPS_DESCR[step.name] }}
 				        	<span class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				        	#{{ docs.VSL_ORSI_GRPID }}
 				       	</span>
@@ -477,7 +529,7 @@ $hardCode =<<<EOC
 				style="white-space:nowrap;padding:0px;">
 					
 					<span  >
-				        	&nbsp;&nbsp;{{step.labeltext}}
+				        	&nbsp;&nbsp;{{ AB_CPARM.VSL_STEPS_DESCR[step.name] }}
 				        	<span class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				        	<span class="text-primary " >#{{ docs.VSL_ORSI_GRPID }}</span>&nbsp;{{docs.VSL_ORSI_CDATE.slice(0,10)}}&nbsp
 				       	</span>
@@ -2302,7 +2354,7 @@ $stepCode .= <<<EOC
       <a class="dropdown-toggle " data-toggle="dropdown" style="white-space:nowrap;width:150px;max-width:150px;padding:0px;">
 	<span class="ca2ret"></span>
 	<span  ng-repeat="step in VSL_STEP_LIST" ng-if="step.name==y.VSL_ORST_STEPS" >
-		{{step.labeltext}}
+		{{ AB_CPARM.VSL_STEPS_DESCR[step.name] }}
 	</span>
       	
       </a>
@@ -2812,7 +2864,7 @@ $stepCode .= <<<EOC
 					&nbsp;{{ invQ.VSL_ORST_ORDQT  }}&nbsp;
 
 					<span ng-repeat="stp in VSL_STEP_LIST" ng-if="stp.name == invQ.VSL_ORST_STEPS">
- 					{{stp.labeltext}} 
+ 					{{ AB_CPARM.VSL_STEPS_DESCR[step.name] }} 
  					</span>
 				</div>
 				
@@ -2890,6 +2942,7 @@ echo  $stepCode;
 
 </div>	
 </div>
+
 
 
 <div class='btn-sm ab-body-buttons hidden' >
@@ -3030,5 +3083,4 @@ echo  $stepCode;
 		</div>
 	</div>
 </div> 
-
 

@@ -90,7 +90,7 @@ $currUsr = $tFnc->getUserData();
 	$scope.setFormPackOff($scope.VPU_ORST_PAKID);
 	$scope.idVPU_ORHE=0;
 	$scope.ABlstAlias('idVPU_ORHE','idVPU_ORHE','vpu_receipt','vpu_rece');
-	
+	$scope.VPU_ORSI_REISS=0;
 	
 	
 	
@@ -183,24 +183,23 @@ echo $xtmp->currHtml;
 					
 		<div class="row well ab-spaceless   {{orderSelected==0||orderSelected==varRow.VPU_ORST_PAKID?'hidden':''}}  " style="border-color:RoyalBlue;" >
 		<form id="mainForm" name="mainForm"  ab-context="1" ab-view="vpu_orhe" ab-main="vpu_orhe"  >
-			<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 text-left " >
+			<div class="col-lg-5 col-md-5 col-sm-12 col-xs-12 text-left " >
 				<table  style="width:100%" >
 				<tr>
-				<td style="width:5%;" >
+				<td style="width:10%;vertical-align:top;" >
 				
 					
 					<input type="button" 
-					 	class="ab-pointer small"
+					 	class="ab-pointer small ab-spaceless"
 						ng-click="setFormPackOff(varRow.VPU_ORST_PAKID);"
 					 	value="Cancel"
 					/>
-					
+					&nbsp;&nbsp;
 				</td>
-				<td style="width:65%;" >	
-				&nbsp;	
-					
+				<td style="width:5%;" >
 				</td>
-				<td style="width:30%;white-space:nowrap;">
+
+				<td style="width:20%;white-space:nowrap;vertical-align:top;">
 				
 <?php
 $xtmp = new appForm("VPU_ORHE");
@@ -212,7 +211,7 @@ $laAttr["class"] = "hidden";
 $inAttr["size"] = "5";
 $hardCode = $xtmp->setYesNoField("VPU_ORSI_REISS");
 // $xtmp->setFieldWrapper("view01","0.122","vpu_orde","x.VPU_ORDE_BAORA","",$grAttr,$laAttr,$inAttr,$hardCode);
-echo "<div><table><tr><td class='small'>Re-Issue&nbsp;</td><td class='small' >" . $hardCode . "</td></tr></table></div>";
+echo "<div><table><tr><td class='small'>Re-Issue&nbsp;</td><td class='small' >" . $hardCode . "</td><td>&nbsp;&nbsp;</td></tr></table></div>";
  
 ?>
 <input class="hidden" ng-if="allPicksSelected==true&&VPU_ORSI_REISS==0&&stpSelName!=''"  size=5 ng-model="VPU_ORSI_PROCE" ng-init="VPU_ORSI_PROCE=1"  />		
@@ -231,6 +230,31 @@ echo "<div><table><tr><td class='small'>Re-Issue&nbsp;</td><td class='small' >" 
 				</span>
 				
 				</td>
+				<td style="width:5%;vertical-align:top;text-align:right;" >
+					<span ng-click="viewText=1-viewText" class="ab-pointer" onclick="$('#txtarea').focus();" >
+						<span class="small text-primary" >Ref</span>&nbsp;
+					</span>	
+
+				</td>
+				<td style="width:60%;vertical-align:top;" ng-init="viewText=0" >	
+
+					<div ng-repeat="headDta in  rawResult.vpu_rece | AB_noDoubles:'VPU_ORST_PAKID' " 
+					ng-if="headDta.VPU_ORST_PAKID==orderSelected" >
+						
+						<textarea ng-model="VPU_ORSI_RTEXT" class="hidden" ng-bind="VPU_ORSI_RTEXT=VPU_ORSI_RTEXTnew + (VPU_ORSI_RTEXTorg?'\n' + headDta.VPU_ORSI_PDATE+'...\n' + VPU_ORSI_RTEXTorg:'') " ></textarea>
+						<input ng-model="VPU_ORSI_RTEXTorg" class="hidden" ng-init="VPU_ORSI_RTEXTorg=headDta.VPU_ORSI_RTEXT" />
+						
+						<span ng-click="viewText=1-viewText" class="ab-pointer" onclick="$('#txtarea').focus();">
+							<span class="{{viewText!=1?'':'hidden'}}">
+									{{headDta.VPU_ORSI_RTEXT.slice(0,30)}} 
+								...<span class="small text-primary glyphicon glyphicon-triangle-bottom"></span>
+							</span>
+						</span>
+					
+						<textarea id="txtarea" class="{{viewText==1?'':'hidden'}}"  ng-blur="viewText=0" ng-model="VPU_ORSI_RTEXTnew" cols=30 rows=3 ></textarea>	
+					</div<	
+					
+				</td>				
 				</tr>
 				
 				</table>
@@ -260,7 +284,7 @@ echo "<div><table><tr><td class='small'>Re-Issue&nbsp;</td><td class='small' >" 
 									
 				        	&nbsp;&nbsp;
 				        	<span ng-if="stepRetract==true" class="glyphicon glyphicon-triangle-left text-danger " ></span>
-				        	{{step.labeltext}}
+				        	{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 				        	<span ng-if="stepRetract!=true" class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				       	</span>
 					
@@ -280,7 +304,7 @@ echo "<div><table><tr><td class='small'>Re-Issue&nbsp;</td><td class='small' >" 
 		
 			</div>
 
-			<div  class="col-lg-3 col-md-3 col-sm-12 col-xs-12 small text-right"  >
+			<div  class="col-lg-2 col-md-2 col-sm-12 col-xs-12 small text-right"  >
 			
 			<span class="hidden" data-toggle="modal" data-target="#ORHE_ALLOC" ng-init="vin_inveQuery=''" >GO</span>
 		
@@ -308,7 +332,7 @@ echo "<div><table><tr><td class='small'>Re-Issue&nbsp;</td><td class='small' >" 
 				style="white-space:nowrap;max-width:150px;padding:0px;">
 					
 					<span  >
-				        	&nbsp;&nbsp;{{step.labeltext}}
+				        	&nbsp;&nbsp;{{ AB_CPARM.VPU_STEPS_DESCR[step.name] }}
 				        	<span class="glyphicon glyphicon-triangle-right text-primary " ></span>
 				        	#{{ docs.VPU_ORSI_GRPID }}
 				       	</span>
@@ -725,20 +749,32 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 				<table style="width:100%;" >
 					<tr>
 
-						<td style="width:30%;"  class="text-left visible-xs visible-md  visible-sm ">
-							<?php echo setHeadField("VPU_ORSI_REISS","10","Re-Issued","","","","text-primary visible-xs visible-md  visible-sm "); ?> 
+						<td  class="text-left visible-xs visible-md  visible-sm ">
+							<?php echo setHeadField("VPU_ORSI_REISS","2","Re-Issued","","","","text-primary visible-xs visible-md  visible-sm "); ?> 
 							
 						</td>
 						
-						<td>									
+						<td style="vertical-align:top;" class="ab-strong ab-pointer" ng-click="varRow.viewText=0">									
 							<span class="{{ varRow.VPU_ORSI_REISS==1?'':'hidden' }}" >
-								<?php echo setHeadField("VPU_ORSI_REISS","5","Yes","","","",""); ?>						
+								Yes
 							</span>
 							<span class="{{ varRow.VPU_ORSI_REISS==1?'hidden':'' }}" >
-								<?php echo setHeadField("VPU_ORSI_REISS","5","No","","","",""); ?>
+								No
+							</span>
+							&nbsp;
+						</td>
+						<td>
+							<span 	ng-init="varRow.viewText=0;varRow.rtext = ABdisplayText(varRow.VPU_ORSI_RTEXT)" 
+								ng-click="varRow.viewText=1-varRow.viewText;"  class="ab-pointer" >
+								<span class="small" >
+									{{varRow.rtext[0].text.slice(0,7)}} 
+									...<span class="small text-primary glyphicon glyphicon-triangle-bottom"></span>
+								</span>
 							</span>
 						</td>
 					</tr>
+
+					
 				</table>
 			</div>
 
@@ -775,7 +811,20 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 					</tr>
 				</table>
 			</div>
-
+			<div class=" col-lg-8 col-md-12 col-sm-12 col-xs-12  ">
+			</div>
+			<div class=" col-lg-2 col-md-12 col-sm-12 col-xs-12  ">
+					<div class="{{varRow.viewText==1?'':'hidden'}} " ng-init="varRow.rtext = ABdisplayText(varRow.VPU_ORSI_RTEXT)" >
+						<div colspan=3 class="small ab-border" style="width:100%" >
+						<div ng-repeat="txt in varRow.rtext">
+						{{txt.text}}
+						</div>
+						<!-- <br>{{varRow.VPU_ORSI_RTEXT}} -->
+						</div>
+					</div>			
+			</div>
+			<div class=" col-lg-2 col-md-12 col-sm-12 col-xs-12  ">
+			</div>
 		
 
 		
@@ -1024,3 +1073,6 @@ function collapseall(dir)
 }
 </script>
 
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              

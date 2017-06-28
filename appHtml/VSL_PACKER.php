@@ -975,16 +975,17 @@ function setHeadField($name,$size,$text,$filter,$sort,$label,$class)
 	
 	
 	<div id="formPick" class="row  ab-border {{orderSelected>0?'':'hidden'}}" ng-init="vslFormPg=2"  >	
-
-	
 		<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12  ">
-				
-				<?php  require_once "VSL_ORHECT_PACK.php"; ?>	
-				
+		------------------------------------------------
+		</div>
+
+		<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12  ">
+			<?php  require_once "VSL_ORHECT_PACK.php"; ?>
 			
 		</div>
-	
-		
+		<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12  ">
+		------------------------------------------------
+		</div>
 	</div> 
 	
 

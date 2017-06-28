@@ -256,6 +256,66 @@ function setHeadField($rePeat,$name,$size,$text,$filter,$sort,$label,$class)
 				</span>
 				
 			</td>
+			<td>
+				<table>
+					<tr>
+						<td colspan=3 class="text-center text-primary ab-underline ab-spaceless" >
+							<label class="small " ng-init="">Sales</label>
+						</td>
+						<td>&nbsp;&nbsp;&nbsp;</td>
+						<td colspan=3  class="text-center text-primary ab-underline ab-spaceless" >
+							<label class="small " ng-init="">Purchase</label>
+						</td>
+					</tr>	
+					<tr>							
+						<td >
+							&nbsp;
+							<span class="btn btn-link ab-spaceless" title="Opened orders only." 
+							ng-click="getItemDetailSales(0,'OPEN');">
+								<span  class="{{orderHistoryVSL=='OPEN'?'text-success ab-strong':'text-primary'}}">Opened</span>
+							</span>
+							&nbsp;
+						</td>
+						<td>
+							&nbsp;
+							<span class="btn btn-link ab-spaceless" ng-click="getItemDetailSales(0,'CLOSED');">
+								<span   class="{{orderHistoryVSL=='CLOSED'?'text-success ab-strong':'text-primary'}}">History</span>
+							</span>
+							&nbsp;
+						</td>
+						<td>
+						`	&nbsp;
+							<span class="btn btn-link ab-spaceless" ng-click="getItemDetailSales(0,'All');">
+								<span   class="{{orderHistoryVSL=='ALL'?'text-success ab-strong':'text-primary'}}">All</span>
+							</span>
+							&nbsp;
+						</td>
+						<td>&nbsp;</td>
+						<td>
+							&nbsp;
+							<span class="btn btn-link ab-spaceless" ng-click="getItemDetailPurch(0,'OPEN');">
+								<span   class="{{orderHistoryVPU=='OPEN'?'text-success ab-strong':'text-primary'}}">Opened</span>
+							</span>
+							&nbsp;
+						</td>
+						<td>
+							&nbsp;
+							<span class="btn btn-link ab-spaceless" ng-click="getItemDetailPurch(0,'CLOSED');">
+								<span   class="{{orderHistoryVPU=='CLOSED'?'text-success ab-strong':'text-primary'}}">History</span>
+							</span>
+							&nbsp;
+						</td>
+						<td>
+							&nbsp;
+							<span class="btn btn-link ab-spaceless" ng-click="getItemDetailPurch(0,'All');">
+								<span   class="{{orderHistoryVPU=='ALL'?'text-success ab-strong':'text-primary'}}">All</span>
+							</span>
+							&nbsp;
+						</td>
+					</tr>
+				</table>		
+						
+			</td>								
 <td class="text-left" >
 <input ng-model="lot_item" class="hidden" />
 <input ng-model="lot_ident" class="hidden" />
@@ -520,8 +580,7 @@ $("[data-target]").each(function()
 					<div exp-list="1" id="exp_{{x.idVIN_ITEM}}" class="row ab-border collapse {{' . "collaps!=1?'':'in'}}" . '" style="padding-left:10px;">
 						<div class="col-sm-7 ">
 							<div class="ab-border well">
-								<label class="ng-binding small " ng-init="">Sales Order:</label>
-								
+								<label class=" small ">Sales Order:</label>
 								&nbsp;<input ng-model="x.noSlsOrd" class="hidden" readonly ng-init="x.noSlsOrd='No sales orders!'" />
 									<span class="ng-binding text-primary small ng-scope"  ng-click="x.vslLotId='';x.showLots=1-x.showLots">
 									<span class="glyphicon glyphicon-check" ng-if="x.showLots==1" ></span>
@@ -632,7 +691,7 @@ $("[data-target]").each(function()
 						<div class="col-sm-7">
 						
 							<div class="ab-border  well">
-								<label class="ng-binding small ">Purchase Order:</label>
+								<label class=" small ">Purchase Order:</label>
 								&nbsp;<input ng-model="x.noPurOrd" class="hidden" readonly ng-init="x.noPurOrd='No Purchase orders!'" />
 									<span class="ng-binding text-primary small ng-scope">
 									<b>{{ x.noPurOrd }}</b>

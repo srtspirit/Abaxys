@@ -15,7 +15,12 @@ A_LocalAgularFn.prototype.A_controler = function($scope,$http,$routeParams)
 	
 }	
 
-
+A_LocalAgularFn.prototype.VAP_OITEMAG = function($scope,$http,$routeParams)
+{
+	
+	<?php require_once "../appCscript/VAP_FINANCE_AGED.php"; ?>
+	
+}
 
 A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 {
@@ -31,15 +36,20 @@ A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 	
 	$scope.initNewSupplier = function()
 	{
-			$scope.initSupp($scope.abSessionResponse.VGB_SUPP_BPART);
+		console.log("initNewSupplier")
+	
+		$scope.initSupp($scope.abSessionResponse.VGB_SUPP_BPART);
+		
+		
 	}	
 	
 	$scope.initSupp = function(bparId)
 	{
+		console.log("INIT_SUPP")
 		var chkObj = new Object();
 		chkObj["idVGB_BPAR"] = bparId;
 		// A_Scope.callBack = "$scope.initOrheData();";
-		A_Scope.callBack = "$scope.initOrheData(data);$scope.setVarForm(-1);";
+		A_Scope.callBack = "$scope.initOrheData(data);$scope.setVarForm(-1);$scope.initLocalPurch();";
 		$scope.ABchk(chkObj,'vap_items');
 		$scope.VAP_BOOKING=0;
 		$scope.VAP_BOOKING_CK=false;
@@ -106,6 +116,7 @@ A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 	
 	$scope.initLocalPurch = function()
 	{
+		console.log("initLocalPurch")
 		$scope["local_purch"] = new Array();
 		$scope["local_purch"][0] = new Object();
 		$scope["local_purch"][0]["idVPU_ORSI"] = 0;
@@ -362,6 +373,7 @@ A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 				{
 					itemTotalNoTax += amtToTax*1;
 				}
+				console.log("VAP_FINANCE-accGrandTotal",$(this).val(),amtToTax,itemTotal,itemTotalNoTax)
 				
 			}
 			
@@ -396,9 +408,33 @@ A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 		return grTotal;	
 	}
 	
+	
+	$scope.updateRpoVariance = function(recSet,flag)
+	{
+		var holdMain = $("#mainForm").attr("ab-main");
+		$("#mainForm").attr("ab-main","vap_oihe_itm");
+		
+		$scope.idVAP_OIHE_ITM = recSet.idVAP_OIHE_ITM;
+		$scope.VAP_OIHE_ITM_OITID = recSet.VAP_OIHE_ITM_OITID;
+		$scope.VAP_OIHE_ITM_ITMID = recSet.VAP_OIHE_ITM_ITMID;
+		$scope.VAP_OIHE_ITM_ORDQT = recSet.VAP_OIHE_ITM_ORDQT;
+		$scope.VAP_OIHE_ITM_OUNET = recSet.VAP_OIHE_ITM_OUNET;
+		$scope.VAP_OIHE_ITM_EXTEN = recSet.VAP_OIHE_ITM_EXTEN;
+<?php
+$sesQ = new AB_querySession();
+$userDta = $sesQ->getUserData();
+?>		
+		
+		$scope.VAP_OIHE_ITM_USLNA = "<?php echo $userDta["userCode"]; ?>";
+		
+		$scope.ABupd(flag.toUpperCase());
+
+		$("#mainForm").attr("ab-main",holdMain);		
+	}
+	
 	$scope.initOrheData = function(oDta)
 	{
-		
+		console.log("initOrheData");
 		$scope["VGB_BPAR_BPART"] = $scope["vap_items"][0]["VGB_BPAR_BPART"];
 		$scope["VAP_OIHE_BSUPP"] = $scope["vap_items"][0]["idVGB_SUPP"];
 		$scope["VAP_OIHE_BTADD"] = $scope["vap_items"][0]["VGB_SUPP_BTADD"];
@@ -425,8 +461,12 @@ A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 		$("#ab-delete").addClass("hidden");
 		$("#ab-create").removeClass("hidden");
 
+console.log("initOrheData111");
 		setDbErr($scope,oDta['posts']);
+console.log("initOrheData222");		
 		A_Scope.setUpdTbl($scope,"vap_oihe","dbMain",oDta['posts']);
+console.log("initOrheData333");		
+console.log("initOrheDataTotal");			
 	}
 
 
@@ -434,6 +474,7 @@ A_LocalAgularFn.prototype.VAP_OITEMCT = function($scope,$http,$routeParams)
 	$scope.setVarForm =function(formNum)
 	{
 
+		console.log("setVarForm");
 		
 		$scope["VAP_FACTOR"] = 0;
 		var formNew = formNum;

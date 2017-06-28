@@ -353,6 +353,8 @@ class vgb_addr extends dbMaster
 
   		}
   		
+  		
+  		// Address Chk
   		$wTbls = new dbMaster("vgb_addr",$this->tblInfo->schema);
 		$wTbls->dbInsRec($dtaObj);			
 
@@ -411,6 +413,7 @@ class vgb_addr extends dbMaster
 
   		}
   		
+  		// Address Chk
   		$wTbls = new dbMaster("vgb_addr",$this->tblInfo->schema);
 		$wTbls->dbUpdRec($dtaObj);			
 
