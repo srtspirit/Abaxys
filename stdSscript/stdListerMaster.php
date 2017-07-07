@@ -92,7 +92,7 @@ abstract class ListerMaster extends dbMaster
 		protected function buildSelectIdQuery()
 		{
 			$query = <<<EOC
-			SELECT (@aa:='RECSET') AS rtype,
+			SELECT (@aa:='RECSET')  AS rtype,
 				{$this->idColumnName} as {$this->id}
 				,{$this->mainColumnName} as {$this->name} 
 EOC;
